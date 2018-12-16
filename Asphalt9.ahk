@@ -14,7 +14,7 @@ SetWorkingDir %A_ScriptDir%
 
 A9_AHK_CLASS = Qt5QWindowIcon
 TOP_HEIGHT = 34 ; 标题栏高度
-BOTTOM_HEIGHT = 52 ;底栏高度
+BOTTOM_HEIGHT = 52 ; 底栏高度
 AX = ; 游戏左上角相对模拟器窗口的X坐标
 AY = ; 游戏左上角相对模拟器窗口的Y坐标
 AW = ; 实际游戏宽度
@@ -56,6 +56,7 @@ CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 
 GetPixel(x, y) ; 获取像素，(x, y)基于(VW, VH)，不判断超出窗口的情况
 {
+	CalcWin()
 	global AW, AH, VW, VH
 	PixelGetColor color, x * AW / VW, y * AH / VH
 	return color
@@ -63,21 +64,19 @@ GetPixel(x, y) ; 获取像素，(x, y)基于(VW, VH)，不判断超出窗口的�
 
 RandomClick(x, y) ; 坐标附近随机点击，(x, y)基于(VW, VH)，不判断超出窗口的情况
 {
+	CalcWin()
 	global AW, AH, VW, VH
 	Random dx, -0.003 * AW, 0.003 * AW
 	Random dy, -0.003 * AH, 0.003 * AH
-	Click %(x * AW / VW + dx)%, %(y * AH / VH + dy)%
+	Click x * AW / VW + dx, y * AH / VH + dy
 }
 
 RandomClickWithDelay(x, y) ; 随机延迟后，坐标附近随机点击，(x, y)基于(VW, VH)，不判断超出窗口的情况
-{
-	global AW, AH, VW, VH
-	Random dx, -0.003 * AW, 0.003 * AW
-	Random dy, -0.003 * AH, 0.003 * AH
+{	
 	Random dt, -200, 500 ; 2/7的概率不延迟，5/7的概率发生至多500ms的延迟
 	if dt > 0
-		Sleep %dt%
-	Click %(x * AW / VW + dx)%, %(y * AH / VH + dy)%
+		Sleep dt
+	RandomClick(x, y)
 }
 
 ; 启动后限时包弹窗1744, 211
