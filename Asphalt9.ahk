@@ -31,7 +31,7 @@ CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 {
 	IfWinNotActive ahk_class %A9_AHK_CLASS%
 		WinActivate ahk_class %A9_AHK_CLASS%
-	WinGetPos ,, winW, winH, ahk_class %A9_AHK_CLASS%
+	WinGetPos ,, winW, winH
 	static lastW = 0, lastH = 0 ; 上次检测的窗口大小，用于判断窗口大小是否变化
 	if winW <> lastW || winH <> lastH
 	{
