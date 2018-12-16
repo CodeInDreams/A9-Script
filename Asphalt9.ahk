@@ -29,6 +29,7 @@ CoordMode Mouse, Client
 
 CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 {
+	global A9_AHK_CLASS, TOP_HEIGHT, BOTTOM_HEIGHT, AX, AY, AW, AH, VW, VH
 	IfWinNotActive ahk_class %A9_AHK_CLASS%
 		WinActivate ahk_class %A9_AHK_CLASS%
 	WinGetPos ,, winW, winH
