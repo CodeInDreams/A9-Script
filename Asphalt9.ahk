@@ -80,4 +80,12 @@ RandomClickWithDelay(x, y) ; 随机延迟后，坐标附近随机点击，(x, y)
 	RandomClick(x, y)
 }
 
+
+Swipe(fromX, fromY, toX, toY)
+{
+	CalcWin()
+	global AW, AH, VW, VH
+	MouseClickDrag Left, fromX * AW / VW, fromY * AH / VH, toX * AW / VW, toY * AH / VH, 
+}
 ; 启动后限时包弹窗1744, 211
+Click 1744, 211
