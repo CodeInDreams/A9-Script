@@ -13,8 +13,8 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 
 A9_AHK_CLASS = Qt5QWindowIcon
-TOP_HEIGHT = 34 ; 标题栏高度
-BOTTOM_HEIGHT = 52 ; 底栏高度
+TOP_HEIGHT = 35 ; 标题栏高度
+BOTTOM_HEIGHT = 53 ; 底栏高度
 AX = ; 游戏左上角相对模拟器窗口的X坐标
 AY = ; 游戏左上角相对模拟器窗口的Y坐标
 AW = ; 实际游戏宽度
@@ -31,8 +31,11 @@ CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 {
 	global A9_AHK_CLASS, TOP_HEIGHT, BOTTOM_HEIGHT, AX, AY, AW, AH, VW, VH
 	IfWinNotActive ahk_class %A9_AHK_CLASS%
+	{
 		WinActivate ahk_class %A9_AHK_CLASS%
-	WinGetPos ,, winW, winH
+		WinWaitActive ahk_class %A9_AHK_CLASS%
+	}
+	WinGetPos ,,, winW, winH
 	static lastW = 0, lastH = 0 ; 上次检测的窗口大小，用于判断窗口大小是否变化
 	if winW <> lastW || winH <> lastH
 	{
@@ -41,35 +44,48 @@ CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 		if ((winH - TOP_HEIGHT - BOTTOM_HEIGHT) * VW > winW * VH) ; 过高
 		{
 			AW := winW
-			AH := winW * VH / VW
+			AH := AW * VH / VW
 			AX := 0
 			AY := (winH - TOP_HEIGHT - BOTTOM_HEIGHT - AH) / 2 + TOP_HEIGHT
 		}
 		else ; 过宽
 		{
 			AH := winH - TOP_HEIGHT - BOTTOM_HEIGHT
-			AW := winH * VW / VH
+			AW := AH * VW / VH
 			AY := TOP_HEIGHT
 			AX := (winW - AW) / 2
 		}
 	}
 }
 
+GetX(x)
+{
+	global AW, VW, AX
+	return x * AW / VW + AX
+}
+
+GetY(y)
+{
+	global AH, VH, AY
+	return y * AH / VH + AY
+}
+
 GetPixel(x, y) ; 获取像素，(x, y)基于(VW, VH)，不判断超出窗口的情况
 {
 	CalcWin()
-	global AW, AH, VW, VH
-	PixelGetColor color, x * AW / VW, y * AH / VH
+	PixelGetColor color, GetX(x), GetY(y)
 	return color
 }
 
 RandomClick(x, y) ; 坐标附近随机点击，(x, y)基于(VW, VH)，不判断超出窗口的情况
 {
 	CalcWin()
-	global AW, AH, VW, VH
+	global AW, AH
 	Random dx, -0.003 * AW, 0.003 * AW
 	Random dy, -0.003 * AH, 0.003 * AH
-	Click x * AW / VW + dx, y * AH / VH + dy
+	resultX := GetX(x) + dx
+	resultY := GetY(y) + dy
+	Click %resultX%, %resultY%
 }
 
 RandomClickWithDelay(x, y) ; 随机延迟后，坐标附近随机点击，(x, y)基于(VW, VH)，不判断超出窗口的情况
@@ -80,12 +96,33 @@ RandomClickWithDelay(x, y) ; 随机延迟后，坐标附近随机点击，(x, y)
 	RandomClick(x, y)
 }
 
-
 Swipe(fromX, fromY, toX, toY)
 {
 	CalcWin()
-	global AW, AH, VW, VH
-	MouseClickDrag Left, fromX * AW / VW, fromY * AH / VH, toX * AW / VW, toY * AH / VH, 
+	global AW, AH, VW, VH, AX, AY
+	MouseClickDrag L, fromX * AW / VW + AX, fromY * AH / VH + AX, toX * AW / VW + AX, toY * AH / VH + AY, 
 }
-; 启动后限时包弹窗1744, 211
-Click 1744, 211
+
+; 以下是2160×1080下A9的坐标
+DAILY_RACE_X = 558
+DAILY_RACE_Y = 1009
+CARIER_RACE_X = 1588
+CARIER_RACE_Y = 1009
+BACK_X = 45
+BACK_Y = 135
+BACK_COLOR = 0xFFFFFF
+HOME_X = 2075
+HOME_Y = 80
+HOME_COLOR = 
+NEXT_X = 
+NEXT_Y = 
+NEXT_COLOR_GREEN = 
+NEXT_COLOR_WHITE = 
+NEXT_COLOR_RED = 
+SALE_AD_X = 1744
+SALE_AD_Y = 210
+
+WinMove ahk_class %A9_AHK_CLASS%, , 0, 0, 2160, 1080 + TOP_HEIGHT + BOTTOM_HEIGHT ; 用于设置窗口位置以便于debug
+
+; 启动后限时包弹窗
+RandomClick(SALE_AD_X, SALE_AD_Y)
