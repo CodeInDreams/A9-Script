@@ -116,27 +116,29 @@ WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测1
 		else
 		{
 			if A_Index > 5
-			dt := dt + 2000
+				dt := dt + 2000
 			Sleep dt
 		}
 	}
-	MsgBox 检测不到特征值，脚本即将退出
-	ExitApp
+	MsgBox 检测不到特征值，脚本即将从A9主页重新开始
+	RandomClick(HOME_X, HOME_Y)
+	Sleep 1000
+	Goto appHome
 }
 
 ; 以下是2160×1080下A9的坐标
 ; A9图标
 APP_OPEN_X = 
 APP_OPEN_Y = 
-; A9关闭按钮
+; A9关闭按钮，窗口绝对位置
 APP_CLOSE_X = 
 APP_CLOSE_Y = 
 ; 每日赛事
 DAILY_RACE_X = 558
 DAILY_RACE_Y = 1009
 ; 我的生涯
-CARIER_RACE_X = 1588
-CARIER_RACE_Y = 1009
+CAREER_RACE_X = 1588
+CAREER_RACE_Y = 1009
 ; 返回
 BACK_X = 45
 BACK_Y = 135
@@ -149,6 +151,7 @@ HOME_COLOR =
 NEXT_X = 
 NEXT_Y = 
 NEXT_COLOR_GREEN = 
+NEXT_COLOR_DEEP_GREEN = 
 NEXT_COLOR_WHITE = 
 NEXT_COLOR_RED = 
 ; 促销广告
@@ -184,8 +187,55 @@ CAR_GAP_W =
 TICKET_X = 
 TICKET_Y = 
 TICKET_COLOR = 
+; 每日车辆战利品搜索区域
+DAILY_CAR_FROM_X = 
+DAILY_CAR_FROM_Y = 
+DAILY_CAR_TO_X = 
+DAILY_CAR_TO_Y = 
+; 每日车辆战利品图片
+DAILY_CAR_IMG = 
 
 WinMove ahk_class %A9_AHK_CLASS%, , 0, 0, 2160, 1080 + TOP_HEIGHT + BOTTOM_HEIGHT ; 用于设置窗口位置以便于debug
 
+TrayTip A9 Script, 20秒后自动开始运行，或按Ctrl+F1立即开始
+countdown = 100
+Loop
+{
+	if countdown > 0
+		Sleep 200
+	countdown--
+}
+^F1:: countdown = 0
+
 ; 从模拟器主页开始
+Label labelAppClose
+Click(APP_CLOSE_X, APP_CLOSE_Y)
+Sleep 200
+
+Label labelAppOpen
+RandomClick(APP_OPEN_X, APP_OPEN_Y)
+WaitColor(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR)
+Sleep 1000
 RandomClick(SALE_AD_X, SALE_AD_Y)
+
+Label labelAppHome
+Loop
+{
+	RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
+	pixel = GetPixel(DAILY_RACE_X, DAILY_RACE_Y)
+	if pixel = NEXT_COLOR_WHITE
+		Break
+	Sleep 200
+}
+RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
+Sleep 1500
+ticketColor = GetPixel(TICKET_X, TICKET_Y)
+if ticketColor = TICKET_COLOR
+{
+	ImageSearch dailyRaceX, dailyRaceY, DAILY_CAR_FROM_Y, DAILY_CAR_FROM_Y, DAILY_CAR_TO_X, DAILY_CAR_TO_Y, DAILY_CAR_IMG
+	if ErrorLevel = 0
+		Click dailyRaceX, dailyRaceY
+}
+
+Label labelCareer
+
