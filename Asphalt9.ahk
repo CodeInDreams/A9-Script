@@ -122,8 +122,8 @@ WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测1
 	}
 	MsgBox 检测不到特征值，脚本即将从A9主页重新开始
 	RandomClick(HOME_X, HOME_Y)
-	Sleep 1000
-	Goto appHome
+	Sleep DELY_LONG
+	Goto, LabelAppHome
 }
 
 ; 以下是2160×1080下A9的坐标
@@ -194,6 +194,9 @@ DAILY_CAR_TO_X =
 DAILY_CAR_TO_Y = 
 ; 每日车辆战利品图片
 DAILY_CAR_IMG = 
+; 点击后延迟
+DELY_SHORT = 200
+DELY_LONG = 1000
 
 WinMove ahk_class %A9_AHK_CLASS%, , 0, 0, 2160, 1080 + TOP_HEIGHT + BOTTOM_HEIGHT ; 用于设置窗口位置以便于debug
 
@@ -202,40 +205,36 @@ countdown = 100
 Loop
 {
 	if countdown > 0
-		Sleep 200
+		Sleep DELY_SHORT
 	countdown--
 }
 ^F1:: countdown = 0
 
 ; 从模拟器主页开始
-Label labelAppClose
-Click(APP_CLOSE_X, APP_CLOSE_Y)
-Sleep 200
+LabelAppClose:
+Click APP_CLOSE_X, APP_CLOSE_Y
+Sleep DELY_SHORT
 
-Label labelAppOpen
+LabelAppOpen:
 RandomClick(APP_OPEN_X, APP_OPEN_Y)
 WaitColor(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR)
-Sleep 1000
+Sleep DELY_LONG
 RandomClick(SALE_AD_X, SALE_AD_Y)
+Sleep DELY_LONG
 
-Label labelAppHome
-Loop
-{
-	RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
-	pixel = GetPixel(DAILY_RACE_X, DAILY_RACE_Y)
-	if pixel = NEXT_COLOR_WHITE
-		Break
-	Sleep 200
-}
+LabelAppHome:
 RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
-Sleep 1500
+RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
+Sleep DELY_LONG
+Sleep DELY_LONG
 ticketColor = GetPixel(TICKET_X, TICKET_Y)
 if ticketColor = TICKET_COLOR
 {
 	ImageSearch dailyRaceX, dailyRaceY, DAILY_CAR_FROM_Y, DAILY_CAR_FROM_Y, DAILY_CAR_TO_X, DAILY_CAR_TO_Y, DAILY_CAR_IMG
 	if ErrorLevel = 0
+	{
 		Click dailyRaceX, dailyRaceY
+		;WaitColor()
+	}
 }
-
-Label labelCareer
 
