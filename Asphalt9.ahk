@@ -11,11 +11,13 @@
 #Persistent
 SendMode Input
 SetWorkingDir %A_ScriptDir%
+CoordMode Pixel, Client
+CoordMode Mouse, Client
 
 A9_AHK_CLASS = Qt5QWindowIcon ; MuMu模拟器的ahk_class
 TOP_HEIGHT = 35 ; 标题栏高度
 BOTTOM_HEIGHT = 53 ; 底栏高度
-APP_INDEX = 1 ; A9是首页后的第几个窗口
+APP_INDEX = 2 ; A9是首页后的第几个窗口
 APP_CLOSE_X := 257 + APP_INDEX * 142 ; A9关闭按钮X坐标
 APP_CLOSE_Y = 16 ; A9关闭按钮Y坐标
 MEMU_HOME_X = 205 ; MuMu首页X坐标
@@ -30,8 +32,6 @@ VH = 1080 ; 100%游戏高度，实际可能会放缩
 WinWait ahk_class %A9_AHK_CLASS%
 TrayTip A9 Script, 脚本开始运行`n可以自由调整窗口大小位置，但不要超出屏幕, 5, 17
 CalcWin()
-CoordMode Pixel, Client
-CoordMode Mouse, Client
 
 CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 {
@@ -85,11 +85,11 @@ GetPixel(x, y) ; 获取像素
 
 CheckPixel(x, y, color) ; 验证像素颜色
 {
-	pixel = GetPixel(x, y)
-	return pixel = %color%
+	pixel := GetPixel(x, y)
+	return (pixel = %color%)
 }
 
-RandomClick(x, y, delay:=0) ; 坐标附近随机点击
+RandomClick(x, y, delay:=0) ; 坐标附近随机点击，点击后休眠一定时间，delay不传或传0时默认1秒
 {
 	CalcWin()
 	global AW, AH, DELY_LONG
@@ -111,11 +111,16 @@ RandomClickWithDelay(x, y, delay:=0) ; 随机延迟后，坐标附近随机点�
 	RandomClick(x, y, delay)
 }
 
-Swipe(fromX, fromY, toX, toY)
+Swipe(fromX, fromY, toX, toY) ; 滑动
 {
 	CalcWin()
 	global AW, AH, VW, VH, AX, AY
-	MouseClickDrag L, fromX * AW / VW + AX, fromY * AH / VH + AX, toX * AW / VW + AX, toY * AH / VH + AY, 
+	dragFromX := fromX * AW / VW + AX
+	dragFromY := fromY * AH / VH + AX
+	dragToX := toX * AW / VW + AX
+	dragToY := toY * AH / VH + AY
+	MouseClickDrag L, dragFromX, dragFromY, dragToX, dragToY, 5
+	Sleep DELY_SHORT
 }
 
 WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测10次后仍不出现就重置脚本
@@ -142,7 +147,8 @@ WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测1
 	ExitApp
 }
 
-; 以下是2160×1080下A9的坐标
+; 2160×1080下的A9专用常量
+
 ; A9图标
 APP_OPEN_X = 340
 APP_OPEN_Y = 217
@@ -172,7 +178,7 @@ NEXT_Y = 973
 NEXT_COLOR_GREEN = 0x12FBC3
 NEXT_COLOR_BLACK = 0xA09692
 NEXT_COLOR_WHITE = 
-NEXT_COLOR_RED = 
+NEXT_COLOR_RED = 0x6412FB
 ; 促销广告
 SALE_AD_X = 1744
 SALE_AD_Y = 210
@@ -205,9 +211,9 @@ CAR_LOWER_OIL_Y = 985
 CAR_GAP_W = 514
 CAR_RUNABLE_COLOR = 0x12FBC3
 ; 票，用于判断票券是否已满
-TICKET_X = 1856
-TICKET_Y = 182
-TICKET_COLOR = 0xFFFFFF
+TICKET_X = 1812
+TICKET_Y = 204
+TICKET_COLOR = 0x5400FF
 ; 每日车辆战利品搜索区域
 DAILY_CAR_FROM_X = 105
 DAILY_CAR_FROM_Y = 712
@@ -216,79 +222,165 @@ DAILY_CAR_TO_Y = 1037
 DAILY_CAR_CLICK_X = 1675
 DAILY_CAR_CLICK_Y = 905
 ; 每日车辆战利品图片
-DAILY_CAR_IMG = 
+DAILY_CAR_IMG = %A_WorkingDir%\resources\daily_race.png
+DAILY_CAR_IMG_W = 74
 ; 点击后延迟
 DELY_SHORT = 200
 DELY_LONG = 1000
 ; 票预留上限，0~9
-TICKET_LIMIT = 9
+TICKET_LIMIT = 8
+; 生涯用车顺序，第一排1、3、5、7，第二排2、4、6、8。都不可用时，会等待到有可用车辆为止
+CAREER_CARS := [5, 6, 10, 6, 18, 13, 15, 17]
 
-WinMove ahk_class %A9_AHK_CLASS%, , 0, 0, 2160, 1080 + TOP_HEIGHT + BOTTOM_HEIGHT ; 用于设置窗口位置以便于debug
+; A9专用函数
 
-TrayTip A9 Script, 3秒后自动开始运行
-countdown = 15
-while countdown > 0
+ResizeWin() ; 用于设置窗口位置以便于debug
 {
-	Sleep DELY_SHORT
-	countdown := countdown - 1
+	global A9_AHK_CLASS, TOP_HEIGHT, BOTTOM_HEIGHT
+	WinMove ahk_class %A9_AHK_CLASS%, , 0, 0, 2160, 1080 + TOP_HEIGHT + BOTTOM_HEIGHT
 }
 
-; 从模拟器主页开始
-LabelAppClose:
-;WinActivate ahk_class %A9_AHK_CLASS%
-;Click %APP_CLOSE_X%, %APP_CLOSE_Y%
-;Click %MEMU_HOME_X%, %MEMU_HOME_Y%
-;Sleep DELY_SHORT
-;
-;LabelAppOpen:
-;RandomClick(APP_OPEN_X, APP_OPEN_Y)
-;Sleep 15000
-Loop
+WaitUser() ; 显示开始运行的提示
 {
-	if A_Index > 120
-		Reload
-	runningCheckPixel := GetPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y)
-	if runningCheckPixel = %GAME_RUNNING_CHECK_COLOR_NORMAL%
-		Break
-	else if runningCheckPixel = %GAME_RUNNING_CHECK_COLOR_DARK%
+	global DELY_SHORT
+	TrayTip A9 Script, 3秒内自动开始运行, 5, 17
+	countdown = 15
+	while countdown > 0
 	{
-		Sleep 2500
-		RandomClick(SALE_AD_X, SALE_AD_Y)
-		Break
+		Sleep DELY_SHORT
+		countdown := countdown - 1
 	}
-	if CheckPixel(NETWORK_ERROR_X, NETWORK_ERROR_Y, NETWORK_ERROR_COLOR)
-		RandomClick(NETWORK_ERROR_X, NETWORK_ERROR_Y)
-	else
-		Sleep DELY_LONG
 }
 
-LabelAppHome:
-if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
+CloseApp() ; 关闭Asphalt 9
 {
+	global A9_AHK_CLASS, APP_CLOSE_X, APP_CLOSE_Y
+	WinActivate ahk_class %A9_AHK_CLASS%
+	Click %APP_CLOSE_X%, %APP_CLOSE_Y%
+}
+
+OpenApp() ; 启动AspHalt 9
+{
+	global
+	Click %MEMU_HOME_X%, %MEMU_HOME_Y%
+	Sleep DELY_SHORT
+	RandomClick(APP_OPEN_X, APP_OPEN_Y)
+	Sleep 15000
+	Loop
+	{
+		if A_Index > 120
+			Reload
+		local runningCheckPixel := GetPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y)
+		if (runningCheckPixel = GAME_RUNNING_CHECK_COLOR_NORMAL)
+			Break
+		else if (runningCheckPixel = GAME_RUNNING_CHECK_COLOR_DARK)
+		{
+			Sleep 2500
+			RandomClick(SALE_AD_X, SALE_AD_Y)
+			Break
+		}
+		if CheckPixel(NETWORK_ERROR_X, NETWORK_ERROR_Y, NETWORK_ERROR_COLOR)
+			RandomClick(NETWORK_ERROR_X, NETWORK_ERROR_Y)
+		else
+			Sleep DELY_LONG
+	}
+}
+
+GoHome() ; 回到A9首页(比赛中不可用)
+{
+	global BACK_X, BACK_Y, BACK_COLOR, HOME_X, HOME_Y
+	while (CheckPixel(BACK_X, BACK_Y, BACK_COLOR))
+		RandomClick(HOME_X, HOME_Y)
+}
+
+RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛；在票消耗到预留值时，开始跑生涯
+{
+	global
+	GoHome()
+	lastDailyRaceTime := A_TickCount
+	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
+	{
+		RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
+		Sleep DELY_LONG
+	}
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
 	Sleep DELY_LONG
-}	
-RandomClick(DAILY_RACE_X, DAILY_RACE_Y)
-isTicketsFull = CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR)
-MsgBox 1
-if tickets > %TICKET_LIMIT% || isTicketsFull ; 当前票大于预留值(也就是还有票可用)或者满票
-{
-	if isTicketsFull
-		tickets = 10
-	else
-		tickets := tickets - 1
-	;lastDailyRaceTime = A_
-	RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y) ; 这里为了让图标缩小到同样大小，便于匹配图像。如果被点击的赛事是要找的目标，那就匹配不到，直接下次再说
-	ImageSearch dailyRaceX, dailyRaceY, DAILY_CAR_FROM_Y, DAILY_CAR_FROM_Y, DAILY_CAR_TO_X, DAILY_CAR_TO_Y, DAILY_CAR_IMG
-	if ErrorLevel = 0
+	local isTicketsFull := !CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR)
+	if (tickets > TICKET_LIMIT || isTicketsFull) ; 当前票大于预留值(也就是还有票可用)或者满票
 	{
-		Click dailyRaceX, dailyRaceY
-		;WaitColor()
+		if isTicketsFull
+			tickets := 10
+		else
+			tickets := tickets - 1
+		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y) ; 这里为了让图标缩小到同样大小，便于匹配图像。如果被点击的赛事是要找的目标，那就匹配不到，直接下次再说
+		Sleep DELY_LONG
+		scaledImageWidth := DAILY_CAR_IMG_W * AW / VW
+		Loop
+		{
+			local dailyCarFromX := GetX(DAILY_CAR_FROM_X)
+			local dailyCarFromY := GetY(DAILY_CAR_FROM_Y)
+			local dailyCarToX := GetX(DAILY_CAR_TO_X)
+			local dailyCarToY := GetY(DAILY_CAR_TO_Y)
+			ImageSearch dailyRaceX, dailyRaceY, dailyCarFromY, dailyCarFromY, dailyCarToX, dailyCarToY, *24 *w%imageScaleWidth% *h-1 %DAILY_CAR_IMG%
+			if (ErrorLevel = 0 || A_Index > 1)
+				Break
+			Sleep 5000
+		}
+		if ErrorLevel = 0
+		{
+			RandomClick(dailyRaceX, dailyRaceY)
+			while (tickets > TICKET_LIMIT)
+			{
+				tickets := tickets - 1
+				lastDailyRaceTime := A_TickCount
+				StartRace(1)
+			}
+		}
 	}
+	RunCareerRace()
 }
-TrayTip finish
+
+RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，如果超过10min没跑赛事，会检查一次每日赛事
+{
+	global
+	GoHome()
+	if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)
+	{
+		RandomClick(CAREER_RACE_X, CAREER_RACE_Y)
+		Sleep DELY_LONG
+	}
+	RandomClick(CAREER_RACE_X, CAREER_RACE_Y)
+	RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y)
+	RandomClick(EURO_SEASON_X, EURO_SEASON_Y)
+	Loop 5
+		Swipe(1424, 167, 1400, 965)
+	local euroRaceYAfterSwipe := EURO_RACE_Y - 5 * (965 - 167)
+	RandomClick(EURO_RACE_X, euroRaceYAfterSwipe)
+	local careerCarSize := CAREER_CARS.MaxIndex()
+	while (lastDailyRaceTime + 600000 > A_TickCount)
+	{
+		local careerCarIndex := Mod(A_Index, careerCarSize)
+		local careerCar := CAREER_CARS[careerCarIndex]
+		StartRace(1)
+	}
+	RunDailyRace()
+}
+
+StartRace(indexOfCar) ; 开始比赛，需要指定用哪辆车，目前仅适用于多车可选的赛事
+{
+	ToolTip start race
+}
+
+; 脚本主逻辑
+
+;ResizeWin()
+WaitUser()
+CloseApp()
+OpenApp()
+RunDailyRace()
 
 ; 热键
+
 ^F10::Pause ; 暂停/恢复
 ^F11::Reload ; 重置
 ^F12::ExitApp ; 结束
