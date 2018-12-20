@@ -8,6 +8,7 @@
 	注意事项：
 		1. 不要超出屏幕，不要有其他窗口置顶遮挡，以免影响点击和坐标计算
 		2. 保持显示顶栏和底栏，不要显示其他侧栏等，以免影响坐标计算
+		3. 如果模拟器是以管理员身份运行，那么本脚本也需要以管理员身份运行
 */
 #NoEnv
 #SingleInstance Ignore
@@ -108,11 +109,11 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 {
 	CalcWin()
 	global AW, AH
-	if (mode = 0 || mode = 2)
+	if (mode = 0 || mode = 1)
 		Random dx, -0.003 * AW, 0.003 * AW
 	else
 		dx := 0
-	if (mode = 0 || mode = 1)
+	if (mode = 0 || mode = 2)
 		Random dy, -0.003 * AH, 0.003 * AH
 	else
 		dy := 0
@@ -126,35 +127,35 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 Swipe(fromX, fromY, toX, toY) ; 滑动
 {
 	CalcWin()
-	global AW, AH, VW, VH, AX, AY
+	global AW, AH, VW, VH, AX, AY, DELY_VERY_SHORT
 	dragFromX := fromX * AW / VW + AX
 	dragFromY := fromY * AH / VH + AX
 	dragToX := toX * AW / VW + AX
 	dragToY := toY * AH / VH + AY
-	SendEvent {Click %dragFromX%, %dragFromY%, down}{click %dragToX%, %dragToY%, up}
+	SendEvent {Click %dragFromX%, %dragFromY%, down}
+	Sleep DELY_VERY_SHORT
+	SendEvent {Click %dragToX%, %dragToY%, up}
 }
 
-WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测10次后仍不出现就重置脚本
+WaitColor(x, y, color*) ; 等待目标位置出现指定颜色的像素，检测10次后仍不出现就重置脚本
 {
-	global HOME_X, HOME_Y, DELY_VERY_LONG
-	dt = 500
+	global HOME_X, HOME_Y, DELY_SHORT, DELY_MIDDLE, DELY_LONG, DELY_VERY_LONG
+	dt = DELY_SHORT
 	Loop 10
 	{
-		if CheckPixel(x, y, color)
-		{
-			return
-		}
-		else
-		{
-			if A_Index > 5
-				dt += 1000
-			Sleep dt
-		}
+		For k, v in color
+			if CheckPixel(x, y, v)
+				return
+		if A_Index > 5
+			dt += DELY_MIDDLE
+		Sleep dt
 	}
 	TrayTip A9 Script, 检测不到特征值，脚本即将重置, 1, 17
+	Sleep DELY_LONG
 	Reload
 	Sleep DELY_VERY_LONG
 	TrayTip A9 Script, 重置失败，脚本即将退出, 1, 17
+	Sleep DELY_LONG
 	ExitApp
 }
 
@@ -164,7 +165,7 @@ WaitColor(x, y, color) ; 等待目标位置出现指定颜色的像素，检测1
 APP_OPEN_X = 340
 APP_OPEN_Y = 217
 ; 网络错误
-NETWORK_ERROR_X = 1220
+NETWORK_ERROR_X = 940
 NETWORK_ERROR_Y = 765
 NETWORK_ERROR_COLOR = 0xFFFFFF
 ; 每日赛事
@@ -212,9 +213,13 @@ GAME_RUNNING_CHECK_Y = 53
 GAME_RUNNING_CHECK_COLOR_DARK = 0x191919
 GAME_RUNNING_CHECK_COLOR_NORMAL = 0xFFFFFF
 ; 比赛中检测
-RACING_CHECK_X = 
-RACING_CHECK_Y = 
-RACING_CHECK_COLOR = 
+RACING_CHECK_X = 158
+RACING_CHECK_Y = 104
+RACING_CHECK_COLOR = 0xFFFFFF
+; 比赛结束检测
+RACE_FINISH_X = 158
+RACE_FINISH_Y = 104
+RACE_FINISH_COLOR = 0x4200F5
 ; 油，用于选车
 CAR_FIRST_OIL_X = 566
 CAR_UPPER_OIL_Y = 627
@@ -240,7 +245,7 @@ TICKET_LIMIT = 8
 ; 生涯用车顺序，第一排1、3、5、7，第二排2、4、6、8。都不可用时，会等待到有可用车辆为止
 CAREER_CARS := [5, 6, 10, 6, 18, 13, 15, 17]
 ; 脚本在哪些小时运行，范围0~23
-RUN_HOURS := [0, 1, 7, 9, 10, 11, 14, 15, 16, 17]
+RUN_HOURS := [0, 1, 7, 9, 10, 11, 14, 15, 16, 17, 21, 22, 23]
 
 ; A9专用函数
 
@@ -248,24 +253,23 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 {
 	global RUN_HOURS, DELY_SUPER_LONG
 	current := A_Hour
-	For hour in RUN_HOURS
-		if (hour - current != 0)
-		{
-			CloseApp()
-			Loop
+	For k, hour in RUN_HOURS
+		if (hour - current = 0)
+			return
+	CloseApp()
+	Loop
+	{
+		Sleep DELY_SUPER_LONG
+		current := A_Hour
+		For k, hour in RUN_HOURS
+			if (hour - current = 0)
 			{
-				Sleep DELY_SUPER_LONG
-				current := A_Hour
-				For hour in RUN_HOURS
-					if (hour - current = 0)
-					{
-						current = 
-						OpenApp()
-						RunDailyRace()
-						return
-					}
+				current = 
+				OpenApp()
+				RunDailyRace()
+				return
 			}
-		}
+	}
 }
 
 WaitUser() ; 显示开始运行的提示
@@ -331,7 +335,8 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
 		RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELY_MIDDLE)
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELY_LONG)
-	local isTicketsFull := !CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR)
+	local isTicketsFull := !CheckPixel(TICKET_X, TICKET_Y, TICET_COLOR)
+	static tickets = 10
 	if (tickets > TICKET_LIMIT || isTicketsFull) ; 当前票大于预留值(也就是还有票可用)或者满票
 	{
 		if isTicketsFull
@@ -363,7 +368,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 				local finished := 0
 				while finished = 0
 				{
-					local carIndex := Mod(A_Index, 6) + 1
+					local carIndex := Mod(A_Index - 1, 6) + 1
 					finished := StartRace(carIndex)
 				}
 			}
@@ -384,14 +389,17 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	while (lastDailyRaceTime + 600000 > A_TickCount)
 	{
 		Loop 5
+		{
 			Swipe(1424, 167, 1415, 965)
+			Sleep DELY_SHORT
+		}
 		local euroRaceYAfterSwipe := EURO_RACE_Y - 5 * (965 - 167)
 		RandomClick(EURO_RACE_X, euroRaceYAfterSwipe, DELY_SHORT)
 		local carArraySize := CAREER_CARS.MaxIndex()
 		local finished := 0
 		while finished = 0
 		{
-			local carArrayIndex := Mod(A_Index, carArraySize)
+			local carArrayIndex := Mod(A_Index - 1, carArraySize) + 1
 			finished := StartRace(CAREER_CARS[carArrayIndex])
 		}
 		StartRace(careerCarIndex)
@@ -402,8 +410,9 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事
 {
 	global
-	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN)
-	RandomClick(NEXT_X, NEXT_Y, , DELY_MIDDLE)
+	CheckTime()
+	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
+	RandomClick(NEXT_X, NEXT_Y, DELY_VERY_SHORT, DELY_LONG)
 	Loop 3
 		Swipe(123, 503, 1985, 511)
 	Sleep DELY_MIDDLE
@@ -416,36 +425,42 @@ StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅�
 	local carX := (relativePos - 1) // 2 * CAR_GAP_W + CAR_FIRST_OIL_X 
 	local carY := (Mod(relativePos, 2) = 0 ? CAR_LOWER_OIL_Y : CAR_UPPER_OIL_Y)
 	if !CheckPixel(carX, carY, CAR_RUNABLE_COLOR)
+	{
+		RandomClick(BACK_X, BACK_Y, , DELY_LONG)
 		return false
-	RandomClick(carX, carY, , DELY_MIDDLE)
-	RandomClick(NEXT_X, NEXT_Y, , DELY_VERY_LONG)
-	Sleep DELY_VERY_LONG
-	Sleep DELY_VERY_LONG
+	}
+	RandomClick(carX - 220, carY - 150, , DELY_LONG)
+	RandomClick(NEXT_X, NEXT_Y, , DELY_SUPER_LONG)
 	WaitColor(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)
 	local dt
 	Loop
 	{
 		Random dt, -200, 500
 		IfLess dt, 0, dt := 0
-		Sleep DELY_LONG
-		RandomClick(NITRO_X, NITRO_Y)
-		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)
+		if dt < 50
+			RandomClick(NITRO_X, NITRO_Y, dt)
+		if dt < 450
+			RandomClick(NITRO_X, NITRO_Y, dt, DELY_LONG)
+		else
+			RandomClick(BRAKE_X, BRAKE_Y, dt, DELY_LONG)
+		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR)
 			Break
 	}
-	
+	while (!CheckPixel(BACK_X, BACK_Y, BACK_COLOR))
+		RandomClick(NEXT_X, NEXT_Y, , DELY_MIDDLE)
 	return true
 }
 
 ; 脚本主逻辑
 
-;ResizeWin()
-;WaitUser()
-;CloseApp()
-;OpenApp()
+ResizeWin()
+WaitUser()
+CloseApp()
+OpenApp()
 RunDailyRace()
 
 ; 热键
-
+	
 ^F10::Pause ; 暂停/恢复
 ^F11::Reload ; 重置
 ^F12::ExitApp ; 结束
