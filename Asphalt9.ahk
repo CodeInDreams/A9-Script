@@ -2,13 +2,21 @@
 	This project is licensed under the terms of the GPL license. See full license in LICENSE.TXT.
 	本项目遵守GPL开源协议，协议内容请见LICENSE.TXT。
 	
-	A9 Script by CodeInDreams
+	名称：A9 Script
+	作者：CodeInDreams
 	适用于：MuMu模拟器
 	分辨率：2160×1080
+	使用说明：
+		1. 安装最新版的AutoHotKey(官网下载地址：https://www.autohotkey.com/download/ahk-install.exe)
+		2. 安装MuMu模拟器，启动后一键安装Google环境，同时自行安装好科学上网软件和Play游戏
+		3. 用apk文件安装好A9，将A9图标置于安卓桌面左上的第一个位置
+		4. 根据需要自行修改配置项(Ctrl+F搜索配置项，都附有明确的注释)：APP_INDEX、TICKET_LIMIT、CAREER_CARS、RUN_HOURS
+		5. 启动模拟器至首页，双击脚本运行即可
+		6. 快捷键：Ctrl+F10 暂停/恢复、Ctrl+F11 重置、Ctrl+F12 退出
 	注意事项：
-		1. 不要超出屏幕，不要有其他窗口置顶遮挡，以免影响点击和坐标计算
-		2. 保持显示顶栏和底栏，不要显示其他侧栏等，以免影响坐标计算
-		3. 如果模拟器是以管理员身份运行，那么本脚本也需要以管理员身份运行
+		1. 如果模拟器是以管理员身份运行，那么本脚本也需要以管理员身份运行
+		2. 不要超出屏幕，不要有其他窗口置顶遮挡，以免影响点击和坐标计算
+		3. 保持显示顶栏和底栏，不要显示侧栏等，以免影响坐标计算
 */
 #NoEnv
 #SingleInstance Ignore
@@ -24,8 +32,8 @@ BOTTOM_HEIGHT = 53 ; 底栏高度
 APP_INDEX = 2 ; 应用是MuMu顶栏的首页后的第几个窗口
 APP_CLOSE_X := 257 + APP_INDEX * 142 ; 应用关闭按钮X坐标
 APP_CLOSE_Y = 16 ; 应用关闭按钮Y坐标
-MEMU_HOME_X = 205 ; MuMu首页X坐标
-MEMU_HOME_Y = 16 ; MuMu首页X坐标
+NEMU_HOME_X = 205 ; MuMu首页X坐标
+NEMU_HOME_Y = 16 ; MuMu首页X坐标
 AX = ; 游戏左上角相对模拟器窗口的X坐标
 AY = ; 游戏左上角相对模拟器窗口的Y坐标
 AW = ; 实际游戏宽度
@@ -295,7 +303,7 @@ OpenApp() ; 启动AspHalt 9
 {
 	global
 	WinActivate ahk_class %AHK_CLASS%
-	Click %MEMU_HOME_X%, %MEMU_HOME_Y%
+	Click %NEMU_HOME_X%, %NEMUNEMU_HOME_Y%
 	RandomClick(APP_OPEN_X, APP_OPEN_Y, DELY_SHORT, DELY_SUPER_LONG)
 	Loop
 	{
@@ -463,4 +471,4 @@ RunDailyRace()
 	
 ^F10::Pause ; 暂停/恢复
 ^F11::Reload ; 重置
-^F12::ExitApp ; 结束
+^F12::ExitApp ; 退出
