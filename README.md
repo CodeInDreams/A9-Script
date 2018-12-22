@@ -1,5 +1,5 @@
 # A9 Script
-##### 基于AHK的Asphalt 9脚本
+##### 基于AHK的A9脚本
 
 
 名称：A9 Script  
