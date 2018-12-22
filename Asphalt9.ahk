@@ -500,10 +500,10 @@ StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅�
 
 ; 脚本主逻辑
 
-ResizeWin()
+;ResizeWin()
 ;WaitUser()
-;CloseApp()
-;OpenApp()
+CloseApp()
+OpenApp()
 RunDailyRace()
 
 ; 热键
