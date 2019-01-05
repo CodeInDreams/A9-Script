@@ -9,7 +9,7 @@
 Process Priority, , High
 SendMode Input
 SetWorkingDir %A_ScriptDir%
-Icon 
+;Icon 
 CoordMode Pixel, Client
 CoordMode Mouse, Client
 
@@ -54,7 +54,7 @@ NITRO_Y = 559
 BRAKE_X = 345
 BRAKE_Y = 480
 ; 欧洲赛事
-EURO_CHAPTER_X = 1815
+EURO_CHAPTER_X = 1816
 EURO_CHAPTER_Y = 1025
 EURO_SEASON_X = 908
 EURO_SEASON_Y = 277
@@ -118,6 +118,10 @@ DAILY_CAR_FEATURE_4_COLOR = 0xC76529
 DAILY_CAR_GAP_W = 280
 DAILY_CAR_CLICK_X = 1920
 DAILY_CAR_CLICK_Y = 905
+; 自动/手动判断相关
+OPERATE_MODE_X = 2003
+OPERATE_MODE_Y = 840
+OPERATE_MODE_RANGE = 12
 
 ; A9专用函数
 
@@ -172,17 +176,21 @@ OpenApp() ; 启动A9
 	}
 }
 
-GoHome() ; 回到A9首页(比赛中不可用)
+GoHome() ; 回到A9首页(比赛中不可用)，
 {
 	global
 	while CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
 	{
 		IfGreater A_Index, 5, RandomClick(BACK_X, BACK_Y, , DELY_LONG)
+		IfGreater A_Index, 10, Reload
 		RandomClick(HOME_X, HOME_Y, , DELY_MIDDLE)
 	}
 	Sleep DELY_MIDDLE
 	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK)
+	{
+		IfGreater A_Index, 10, Reload
 		RandomClick(SALE_AD_X, SALE_AD_Y, , DELY_MIDDLE)
+	}
 }
 
 RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛；在票消耗到预留值时，开始跑生涯
@@ -233,7 +241,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
 				local carIndex := 1
-				while (!StartRace(carIndex))
+				while (!StartRace(carIndex)) ; 这里都没油就等着
 					carIndex := Mod(A_Index, 6) + 1
 			}
 		}
@@ -250,28 +258,39 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELY_SHORT, DELY_SHORT, 2)
-	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELY_MIDDLE)
-	carArraySize := CAREER_CARS.MaxIndex()
+	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELY_MIDDLE, 2)
+	local carArraySize := CAREER_CARS.MaxIndex()
 	while (lastDailyRaceTime + 600000 > A_TickCount)
 	{
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
 		Loop 6
 			Swipe(1424, 200, 1415, 950)
 		Sleep DELY_VERY_SHORT
-		local foundEuroRace := false
-		while (!foundEuroRace) ; 解决滑动误差
+		Loop 4 ; 解决滑动误差，当前屏幕找不到EURO 12，就继续滑动，重复4次找不到就放弃
 		{
-			local yDevition := (A_Index - 1) * EURO_RACE_Y_DEVIATION
-			foundEuroRace := true
-			if CheckPixel(EURO_RACE_X, EURO_RACE_Y + yDevition, EURO_RACE_COLOR)
-				RandomClick(EURO_RACE_X, EURO_RACE_Y + yDevition, DELY_SHORT)
-			else if (A_Index > 1 && CheckPixel(EURO_RACE_X, EURO_RACE_Y - yDevition, EURO_RACE_COLOR))
-				RandomClick(EURO_RACE_X, EURO_RACE_Y - yDevition, DELY_SHORT)
-			else if A_Index > 6
-				RunDailyRace()
-			else
-				foundEuroRace := false
+			local foundEuroRace := false
+			while (!foundEuroRace) ; 解决滑动误差，在当前屏幕内查找EURO 12
+			{
+				local yDevition := (A_Index - 1) * EURO_RACE_Y_DEVIATION
+				if CheckPixel(EURO_RACE_X, EURO_RACE_Y + yDevition, EURO_RACE_COLOR)
+				{
+					RandomClick(EURO_RACE_X, EURO_RACE_Y + yDevition, DELY_SHORT)
+					foundEuroRace := true
+				}
+				else if (A_Index > 1 && CheckPixel(EURO_RACE_X, EURO_RACE_Y - yDevition, EURO_RACE_COLOR))
+				{
+					RandomClick(EURO_RACE_X, EURO_RACE_Y - yDevition, DELY_SHORT)
+					foundEuroRace := true
+				}
+				else if A_Index > 6
+					Break
+			}
+			if (foundEuroRace)
+				Break
+			Swipe(1424, 200, 1415, 950)
 		}
+		if (!foundEuroRace)
+			RunDailyRace()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
 		local carArrayIndex := 1
@@ -290,13 +309,17 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	RunDailyRace()
 }
 
-StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事
+StartRace(indexOfCar, waitTime:=20) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitTime：检测赛事开始与否的操作超时时间，默认20秒
 {
 	global
 	CheckTime()
-	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR)
+	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; 重置车辆位置，如果滑动次数超过10次，那么说明不正常，就要重置脚本
 		|| !CheckPixel(CAR_HEAD_2_X, CAR_HEAD_2_Y, CAR_HEAD_2_COLOR))
+	{
+		if A_Index > 10
+			Reload
 		Swipe(239, 503, 1837, 511)
+	}
 	ToolTip 正在检查第%indexOfCar%辆车
 	Sleep DELY_SHORT
 	local relativePos := indexOfCar
@@ -323,8 +346,19 @@ StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅�
 		return false
 	ToolTip
 	RandomClick(carX - 220, carY - 150, , DELY_LONG)
+	if !CheckOperationMode()
+		RandomClick(OPERATION_MODE_X, OPERATION_MODE_Y, , DELY_LONG, 3)
 	RandomClick(NEXT_X, NEXT_Y, , DELY_SUPER_LONG)
-	WaitColor(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)
+	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
+	{
+		if (A_Index > waitTime)
+		{
+			ShowTrayTip("无法检测比赛是否已经开始，现在按照已开始处理")
+			Break
+		}
+		Sleep DELY_MIDDLE
+	}
+	local maxRaceTime := A_TickCount + 300000 ; 设定比赛超时时间5分钟，超时后重置脚本
 	local dt
 	Loop
 	{
@@ -342,6 +376,8 @@ StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅�
 			Swipe(1884, 530, 1825, 532)
 		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR)
 			Break
+		if (A_TickCount > maxRaceTime)
+			Reload
 	}
 	local successCount = 0
 	while (successCount < 3 || A_Index > 100)
@@ -367,16 +403,30 @@ StartRace(indexOfCar) ; 开始比赛，需要指定用第几辆车，目前仅�
 	return true
 }
 
+CheckOperationMode() ; 检查操作模式是否是自动挡
+{
+	global OPERATE_MODE_X, OPERATE_MODE_Y, OPERATE_MODE_RANGE
+	operateModeX := OPERATE_MODE_X
+	operateModeY := OPERATE_MODE_Y
+	Loop %OPERATE_MODE_RANGE% ; 判断操作模式是否为手动
+	{
+		operateModeColor := GetPixel(operateModeX, operateModeY)
+		if ((operateModeColor & 0xFF00) > 0x7FFF) ; 即：绿色 > 127
+			return true
+	}
+	return false
+}
+
 Init() ; 脚本主逻辑
 {
 	OnExit RevertControlSetting
 	ShowTrayTip("脚本开始运行`n可以自由调整窗口大小位置")
 	WaitWin()
 	CalcWin()
-	;ResizeWin()
+	ResizeWin()
 	;WaitUser()
-	CloseApp()
-	OpenApp()
+	;CloseApp()
+	;OpenApp()
 	RunDailyRace()
 }
 
@@ -385,19 +435,41 @@ return
 
 ; 热键
 
-^F10::Pause ; 暂停/恢复
-^F11::Reload ; 重置
-^F12::ExitApp ; 退出
+^F9::Pause ; 暂停/恢复
+^F10::Reload ; 重置
+^F11::ExitApp ; 退出
+^F12:: ; 关闭A9并退出
+Gosub RevertControlSetting
+CloseApp()
+ExitApp
+return
 
 ; 事件处理
 
 RevertControlSetting: ; 退出时，如果是
 if A_ExitReason in Logoff,Shutdown,Close,Menu,Exit ; 在这行语句中, 注意不要在逗号周围含有空格
 {
-	if OPERATE_MODE = 1
+	if (OPERATE_MODE = 1)
 	{
-		GoHome()
-		
+		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; 比赛中则先退出比赛，如果比赛中检测失效，那这里不会正确改回操作模式
+		{
+			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
+			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_MIDDLE, 3)
+		}
+		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK)
+			return
+		if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)
+			RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
+		RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
+		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+		RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELY_SHORT, DELY_SHORT, 2)
+		RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELY_MIDDLE)
+		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
+		RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
+		RandomClick(CAR_FIRST_OIL_X - 220, CAR_UPPER_OIL_Y - 150, , DELY_LONG)
+		if CheckOperationMode()
+			RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELY_LONG, 3)
 	}
 }
-ExitApp  
+ExitApp
+return

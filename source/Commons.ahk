@@ -18,37 +18,29 @@ DELY_SUPER_LONG = 15000 ; 等待时间，超级长
 
 WaitWin() ; 等待模拟器运行
 {
-	global EMU_AHK_CLASS, EMU_AHK_EXE
+	global EMU_AHK_CLASS, EMU_AHK_EXE, EMU_AHK_ID
 	if EMU_AHK_CLASS
 		WinWait ahk_class %EMU_AHK_CLASS%
 	else if EMU_AHK_EXE
 		WinWait ahk_exe %EMU_AHK_EXE%
 	else
 		MsgBox 配置有误
+	WinGet EMU_AHK_ID
 }
 
 ActivateWin() ; 激活模拟器窗口
 {
-	global EMU_AHK_CLASS, EMU_AHK_EXE
-	if EMU_AHK_CLASS
-		IfWinNotActive ahk_class %EMU_AHK_CLASS%
-		{
-			WinActivate
-			WinWaitActive
-		}
-	else if EMU_AHK_EXE
-		IfWinNotActive ahk_exe %EMU_AHK_EXE%
-		{
-			WinActivate
-			WinWaitActive
-		}
-	else
-		MsgBox 配置有误
+	global EMU_AHK_ID
+	IfWinNotActive ahk_id %EMU_AHK_ID%
+	{
+		WinActivate
+		WinWaitActive
+	}
 }
 
 CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 {
-	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, AX, AY, AW, AH, VW, VH
+	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, AX, AY, AW, AH, VW, VH, EMU_AHK_ID
 	ActivateWin()
 	WinGetPos ,,, winW, winH
 	static lastW = 0, lastH = 0 ; 上次检测的窗口大小，用于判断窗口大小是否变化
@@ -75,8 +67,8 @@ CalcWin() ; 发现窗口大小变化后，重新计算AX AY AW AH
 
 ResizeWin() ; 用于设置窗口位置以便于debug
 {
-	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, VW, VH
-	WinMove ,, 0, 0, VW + LEFT_WIDTH + RIGHT_WIDTH, VH + TOP_HEIGHT + BOTTOM_HEIGHT
+	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, VW, VH, EMU_AHK_ID
+	WinMove ahk_id %EMU_AHK_ID%, , 0, 0, VW + LEFT_WIDTH + RIGHT_WIDTH, VH + TOP_HEIGHT + BOTTOM_HEIGHT
 }
 
 GetX(x) ; 获取实际位置X坐标
