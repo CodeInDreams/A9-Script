@@ -1,250 +1,6 @@
-/*	
+ï»¿/*	
 	This project is licensed under the terms of the GPL license. See full license in LICENSE.TXT.
-	±¾ÏîÄ¿×ñÊØGPL¿ªÔ´Ğ­Òé£¬Ğ­ÒéÄÚÈİÇë¼ûLICENSE.TXT¡£
-*/
-
-; ²Ù×÷Ä£Ê½£¬0×Ô¶¯£¬1ÊÖ¶¯£¬ÉèÖÃÎªÊÖ¶¯À´ÔÚ¹Ø±ÕÊ±ÇĞ»»»ØÊÖ¶¯Ä£Ê½
-OPERATE_MODE = 1
-; Ó¦ÓÃÊÇ¶¥À¸µÄ"Ê×Ò³"ºóµÄµÚ¼¸¸ö´°¿Ú
-APP_INDEX = 1
-; Æ±Ô¤ÁôÉÏÏŞ£¬0~10£¬½¨ÒéĞ¡ÓÚ9ÒÔÃâÀË·ÑÀË·ÑÆ±
-TICKET_LIMIT = 8
-; ÉúÑÄÓÃ³µË³Ğò£¬µÚÒ»ÅÅ1¡¢3¡¢5¡¢7£¬µÚ¶şÅÅ2¡¢4¡¢6¡¢8¡£¶¼²»¿ÉÓÃÊ±£¬»áµÈ´ıµ½ÓĞ¿ÉÓÃ³µÁ¾ÎªÖ¹
-CAREER_CARS := [5, 6, 4, 7, 10, 12, 13]
-; ½Å±¾ÔÚÄÄĞ©Ğ¡Ê±ÔËĞĞ£¬·¶Î§0~23
-RUN_HOURS := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
-
-/*	
-	This project is licensed under the terms of the GPL license. See full license in LICENSE.TXT.
-	±¾ÏîÄ¿×ñÊØGPL¿ªÔ´Ğ­Òé£¬Ğ­ÒéÄÚÈİÇë¼ûLICENSE.TXT¡£
-*/
-
-AX = ; ÓÎÏ·×óÉÏ½ÇÏà¶ÔÄ£ÄâÆ÷´°¿ÚµÄX×ø±ê
-AY = ; ÓÎÏ·×óÉÏ½ÇÏà¶ÔÄ£ÄâÆ÷´°¿ÚµÄY×ø±ê
-AW = ; Êµ¼ÊÓÎÏ·¿í¶È
-AH = ; Êµ¼ÊÓÎÏ·¸ß¶È
-VW = 2160 ; 100%ÓÎÏ·¿í¶È£¬Êµ¼Ê¿ÉÄÜ»á·ÅËõ
-VH = 1080 ; 100%ÓÎÏ·¸ß¶È£¬Êµ¼Ê¿ÉÄÜ»á·ÅËõ
-DELY_VERY_SHORT = 200 ; µÈ´ıÊ±¼ä£¬ºÜ¶Ì
-DELY_SHORT = 500 ; µÈ´ıÊ±¼ä£¬¶Ì
-DELY_MIDDLE = 1000 ; µÈ´ıÊ±¼ä£¬ÖĞµÈ
-DELY_LONG = 2000 ; µÈ´ıÊ±¼ä£¬³¤
-DELY_VERY_LONG = 3000 ; µÈ´ıÊ±¼ä£¬ºÜ³¤
-DELY_SUPER_LONG = 15000 ; µÈ´ıÊ±¼ä£¬³¬¼¶³¤
-
-WaitWin() ; µÈ´ıÄ£ÄâÆ÷ÔËĞĞ
-{
-	global EMU_AHK_CLASS, EMU_AHK_EXE, EMU_AHK_ID
-	if EMU_AHK_CLASS
-		WinWait ahk_class %EMU_AHK_CLASS%
-	else if EMU_AHK_EXE
-		WinWait ahk_exe %EMU_AHK_EXE%
-	else
-		MsgBox ÅäÖÃÓĞÎó
-	WinGet EMU_AHK_ID
-}
-
-ActivateWin() ; ¼¤»îÄ£ÄâÆ÷´°¿Ú
-{
-	global EMU_AHK_ID
-	IfWinNotActive ahk_id %EMU_AHK_ID%
-	{
-		WinActivate
-		WinWaitActive
-	}
-}
-
-CalcWin() ; ·¢ÏÖ´°¿Ú´óĞ¡±ä»¯ºó£¬ÖØĞÂ¼ÆËãAX AY AW AH
-{
-	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, AX, AY, AW, AH, VW, VH, EMU_AHK_ID
-	ActivateWin()
-	WinGetPos ,,, winW, winH
-	static lastW = 0, lastH = 0 ; ÉÏ´Î¼ì²âµÄ´°¿Ú´óĞ¡£¬ÓÃÓÚÅĞ¶Ï´°¿Ú´óĞ¡ÊÇ·ñ±ä»¯
-	if winW != lastW || winH != lastH
-	{
-		lastW := winW
-		lastH := winH
-		if ((winH - TOP_HEIGHT - BOTTOM_HEIGHT) * VW > (winW - LEFT_WIDTH - RIGHT_WIDTH) * VH) ; ¹ı¸ß
-		{
-			AW := winW - LEFT_WIDTH - RIGHT_WIDTH
-			AH := AW * VH / VW
-			AX := LEFT_WIDTH
-			AY := (winH - TOP_HEIGHT - BOTTOM_HEIGHT - AH) / 2 + TOP_HEIGHT
-		}
-		else ; ¹ı¿í
-		{
-			AH := winH - TOP_HEIGHT - BOTTOM_HEIGHT
-			AW := AH * VW / VH
-			AY := TOP_HEIGHT
-			AX := (winW - LEFT_WIDTH - RIGHT_WIDTH - AW) / 2 + LEFT_WIDTH
-		}
-	}
-}
-
-ResizeWin() ; ÓÃÓÚÉèÖÃ´°¿ÚÎ»ÖÃÒÔ±ãÓÚdebug
-{
-	global TOP_HEIGHT, BOTTOM_HEIGHT, LEFT_WIDTH, RIGHT_WIDTH, VW, VH, EMU_AHK_ID
-	WinMove ahk_id %EMU_AHK_ID%, , 0, 0, VW + LEFT_WIDTH + RIGHT_WIDTH, VH + TOP_HEIGHT + BOTTOM_HEIGHT
-}
-
-GetX(x) ; »ñÈ¡Êµ¼ÊÎ»ÖÃX×ø±ê
-{
-	global AW, VW, AX
-	return x * AW / VW + AX
-}
-
-GetY(y) ; »ñÈ¡Êµ¼ÊÎ»ÖÃY×ø±ê
-{
-	global AH, VH, AY
-	return y * AH / VH + AY
-}
-
-GetPixel(x, y) ; »ñÈ¡ÏñËØ
-{
-	CalcWin()
-	PixelGetColor pixel, GetX(x), GetY(y)
-	return pixel
-}
-
-CheckPixel(x, y, colors*) ; ÑéÖ¤ÏñËØÑÕÉ«
-{
-	pixel := GetPixel(x, y)
-	For k, color in colors
-		if (pixel = color)
-			return true
-	return false
-}
-
-CheckPixelWithDeviation(x, y, color, deviation:=100) ; ÑéÖ¤ÏñËØÑÕÉ«£¬ÔÊĞíÎó²î
-{
-	pixel := GetPixel(x, y)
-	pr := pixel & 0xFF
-	pg := (pixel & 0xFF00) >> 8
-	pb := pixel >> 16
-	cr := color & 0xFF
-	cg := (color & 0xFF00) >> 8
-	cb := color >> 16
-	return (Abs(pr - cr) < deviation && Abs(pb - cg) < deviation && Abs(pb - cb) < deviation)
-}
-
-WaitColor(x, y, color*) ; µÈ´ıÄ¿±êÎ»ÖÃ³öÏÖÖ¸¶¨ÑÕÉ«µÄÏñËØ£¬¼ì²â10´ÎºóÈÔ²»³öÏÖ¾ÍÖØÖÃ½Å±¾
-{
-	global HDELY_SHORT, DELY_MIDDLE, DELY_LONG, DELY_VERY_LONG
-	dt = DELY_SHORT
-	Loop 10
-	{
-		For k, v in color
-			if CheckPixel(x, y, v)
-				return
-		if A_Index > 5
-			dt += DELY_MIDDLE
-		Sleep dt
-	}
-	ShowTrayTip("¼ì²â²»µ½ÌØÕ÷Öµ£¬½Å±¾¼´½«ÖØÖÃ", DELY_LONG)
-	Sleep DELY_LONG
-	Reload
-	Sleep DELY_VERY_LONG
-	ShowTrayTip("ÖØÖÃÊ§°Ü£¬½Å±¾¼´½«ÍË³ö", DELY_LONG)
-	Sleep DELY_LONG
-	ExitApp
-}
-
-RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; ×ø±ê¸½½üËæ»úµã»÷¡£timePrepare>0Ê±µã»÷Ç°µÈ´ıÒ»¶¨Ê±¼ä£¬timeAppend>0Ê±µã»÷ºóµÈ´ıÒ»¶¨Ê±¼ä£¬mode¿ÉÖ¸¶¨ÄÄĞ©×ø±êËæ»úÆ«ÒÆ£¬0£ºÆ«ÒÆxy¡¢1£ºÖ»Æ«ÒÆx¡¢2£ºÖ»Æ«ÒÆy¡¢ÆäËû£º¶¼²»Æ«ÒÆ
-{
-	CalcWin()
-	global AW, AH
-	if (mode = 0 || mode = 1)
-		Random dx, -0.003 * AW, 0.003 * AW
-	else
-		dx := 0
-	if (mode = 0 || mode = 2)
-		Random dy, -0.003 * AH, 0.003 * AH
-	else
-		dy := 0
-	resultX := GetX(x) + dx
-	resultY := GetY(y) + dy
-	IfGreater timePrepare, 0, Sleep timePrepare
-	Click %resultX%, %resultY%
-	IfGreater timeAppend, 0, Sleep timeAppend
-}
-
-Swipe(fromX, fromY, toX, toY, mode:=0) ; »¬¶¯£¬mode£¬0£º¿ìËÙµ«²»±£Ö¤¾«È·£¬1£º¾«È·µ«²»¹»¿ì
-{
-	CalcWin()
-	global AH, VH, DELY_SHORT
-	dragFromX := GetX(fromX)
-	dragFromY := GetY(fromY)
-	dragToX := GetX(toX)
-	dragToY := GetY(toY)
-	Click %dragFromX%, %dragFromY%, D
-	dx := Abs(dragToX - dragFromX)
-	dy := Abs(dragToY - dragFromY)
-	part := (dx > dy ? dx : dy)
-	dxPart := dx // part
-	if (dragFromX > dragToX)
-		dxPart := -dxPart
-	dyPart := dy // part
-	if (dragFromY > dragToY)
-		dyPart := -dyPart
-	Loop %part%
-	{
-		MouseMove dxPart, dyPart, , R
-		if (A_Index & 0xF = 0 && mode = 1) ; ¼õÉÙ¶ş½øÖÆÎ»1µÄ¸öÊı£¬À´Ìá¸ß¾«¶È£¬µ«»áÔö¼ÓÑÓ³Ù
-			Sleep 1
-	}
-	MouseMove dragToX, dragToY
-	Sleep DELY_SHORT
-	Click %dragToX%, %dragToY%, U
-}
-
-ShowTrayTip(text, period:=1000) ; ÏÔÊ¾periodºÁÃëµÄÍĞÅÌÇøÌáÊ¾
-{
-	TrayTip A9 Script, %text%, , 16
-	SetTimer HideTrayTip, -%period%
-}
-
-HideTrayTip() ; Òş²ØÍĞÅÌÇøÌáÊ¾
-{
-	TrayTip
-}
-
-/*	
-	This project is licensed under the terms of the GPL license. See full license in LICENSE.TXT.
-	±¾ÏîÄ¿×ñÊØGPL¿ªÔ´Ğ­Òé£¬Ğ­ÒéÄÚÈİÇë¼ûLICENSE.TXT¡£
-*/
-
-EMU_AHK_CLASS = Qt5QWindowIcon ; Ä£ÄâÆ÷µÄahk_class
-EMU_AHK_EXE = ; Ä£ÄâÆ÷µÄahk_exe
-TOP_HEIGHT = 35 ; ±êÌâÀ¸¸ß¶È
-BOTTOM_HEIGHT = 53 ; µ×À¸¸ß¶È
-LEFT_WIDTH = 0 ; ×ó²à¿í¶È
-RIGHT_WIDTH = 0 ; ÓÒ²à¿í¶È
-APP_CLOSE_X := 257 + APP_INDEX * 142 ; Ó¦ÓÃ¹Ø±Õ°´Å¥X×ø±ê
-APP_CLOSE_Y = 16 ; Ó¦ÓÃ¹Ø±Õ°´Å¥Y×ø±ê
-EMU_HOME_X = 205 ; Ê×Ò³X×ø±ê
-EMU_HOME_Y = 16 ; Ê×Ò³X×ø±ê
-APP_OPEN_X = 340 ; A9Í¼±êX×ø±ê
-APP_OPEN_Y = 217 ; A9Í¼±êY×ø±ê
-
-CloseApp() ; ¹Ø±ÕA9
-{
-	global EMU_AHK_CLASS, APP_CLOSE_X, APP_CLOSE_Y
-	WinActivate ahk_class %EMU_AHK_CLASS%
-	Click %APP_CLOSE_X%, %APP_CLOSE_Y%
-}
-
-RunApp() ; Æô¶¯A9
-{
-	global EMU_AHK_CLASS, APP_INDEX, EMU_HOME_X, EMU_HOME_Y, APP_OPEN_X, APP_OPEN_Y, DELY_SHORT, DELY_SUPER_LONG
-	WinActivate ahk_class %EMU_AHK_CLASS%
-	if APP_INDEX > 1
-		Click %EMU_HOME_X%, %EMU_HOME_Y%
-	RandomClick(APP_OPEN_X, APP_OPEN_Y, DELY_SHORT, DELY_SUPER_LONG)
-}
-
-/*	
-	This project is licensed under the terms of the GPL license. See full license in LICENSE.TXT.
-	±¾ÏîÄ¿×ñÊØGPL¿ªÔ´Ğ­Òé£¬Ğ­ÒéÄÚÈİÇë¼ûLICENSE.TXT¡£
+	æœ¬é¡¹ç›®éµå®ˆGPLå¼€æºåè®®ï¼Œåè®®å†…å®¹è¯·è§LICENSE.TXTã€‚
 */
 
 #NoEnv
@@ -257,29 +13,29 @@ SetWorkingDir %A_ScriptDir%
 CoordMode Pixel, Client
 CoordMode Mouse, Client
 
-; 2160¡Á1080ÏÂµÄA9×¨ÓÃ³£Á¿
+; 2160Ã—1080ä¸‹çš„A9ä¸“ç”¨å¸¸é‡
 
-; ÍøÂç´íÎó
+; ç½‘ç»œé”™è¯¯
 NETWORK_ERROR_X = 940
 NETWORK_ERROR_Y = 765
 NETWORK_ERROR_COLOR = 0xFFFFFF
-; Ã¿ÈÕÈüÊÂ
+; æ¯æ—¥èµ›äº‹
 DAILY_RACE_X = 500
 DAILY_RACE_Y = 973
 DAILY_RACE_COLOR = 0xFFFFFF
-; ÎÒµÄÉúÑÄ
+; æˆ‘çš„ç”Ÿæ¶¯
 CAREER_RACE_X = 1530
 CAREER_RACE_Y = 973
 CAREER_RACE_COLOR = 0xFFFFFF
-; ·µ»Ø
+; è¿”å›
 BACK_X = 45
 BACK_Y = 100
 BACK_COLOR = 0xFFFFFF
-; Ö÷Ò³
+; ä¸»é¡µ
 HOME_X = 2075
 HOME_Y = 45
 HOME_COLOR = 0xEEE7E3
-; ÏÂÒ»²½
+; ä¸‹ä¸€æ­¥
 NEXT_X = 1650
 NEXT_X_2 = 1850
 NEXT_X_3 = 911
@@ -288,16 +44,16 @@ NEXT_COLOR_GREEN = 0x12FBC3
 NEXT_COLOR_BLACK = 0xA09692
 NEXT_COLOR_WHITE = 0xFFFFFF
 NEXT_COLOR_RED = 0x6412FB
-; ´ÙÏú¹ã¸æ
+; ä¿ƒé”€å¹¿å‘Š
 SALE_AD_X = 1744
 SALE_AD_Y = 186
-; µªÆø
+; æ°®æ°”
 NITRO_X = 1830
 NITRO_Y = 559
-; É²³µ
+; åˆ¹è½¦
 BRAKE_X = 345
 BRAKE_Y = 480
-; Å·ÖŞÈüÊÂ
+; æ¬§æ´²èµ›äº‹
 EURO_CHAPTER_X = 1816
 EURO_CHAPTER_Y = 1025
 EURO_SEASON_X = 908
@@ -306,28 +62,28 @@ EURO_RACE_X = 761
 EURO_RACE_Y = 640
 EURO_RACE_Y_DEVIATION = 65
 EURO_RACE_COLOR = 0x12FBC3
-; A9ÔËĞĞ¼ì²â
+; A9è¿è¡Œæ£€æµ‹
 GAME_RUNNING_CHECK_X = 637
 GAME_RUNNING_CHECK_Y = 53
 GAME_RUNNING_CHECK_COLOR_DARK = 0x191919
 GAME_RUNNING_CHECK_COLOR_GRAY = 0x343434
 GAME_RUNNING_CHECK_COLOR_NORMAL = 0xFFFFFF
-; ±ÈÈüÖĞ¼ì²â
+; æ¯”èµ›ä¸­æ£€æµ‹
 RACING_CHECK_X = 158
 RACING_CHECK_Y = 104
 RACING_CHECK_COLOR = 0xFFFFFF
-; ±ÈÈü½áÊø¼ì²â
+; æ¯”èµ›ç»“æŸæ£€æµ‹
 RACE_FINISH_X = 158
 RACE_FINISH_Y = 104
 RACE_FINISH_COLOR = 0x4200F5
-; ÓÍ£¬ÓÃÓÚÑ¡³µ
+; æ²¹ï¼Œç”¨äºé€‰è½¦
 CAR_FIRST_OIL_X = 630
 CAR_UPPER_OIL_Y = 633
 CAR_LOWER_OIL_Y = 993
 CAR_GAP_W = 514
 CAR_RUNABLE_COLOR_MIN = 0x12260C
 CAR_RUNABLE_COLOR_MAX = 0x39FBC3
-; Ñ¡³µ»¬¶¯¼ì²â
+; é€‰è½¦æ»‘åŠ¨æ£€æµ‹
 CAR_HEAD_1_X = 101
 CAR_HEAD_1_Y = 927
 CAR_HEAD_1_COLOR = 0x230E04
@@ -343,11 +99,11 @@ CAR_FEATURE_2_X = 247
 CAR_FEATURE_2_Y = 432
 CAR_FEATURE_COLOR_NORMAL = 0xFFFFFF
 CAR_FEATURE_COLOR_LOCKED = 0x7F7F7F
-; Æ±£¬ÓÃÓÚÅĞ¶ÏÆ±È¯ÊÇ·ñÒÑÂú
+; ç¥¨ï¼Œç”¨äºåˆ¤æ–­ç¥¨åˆ¸æ˜¯å¦å·²æ»¡
 TICKET_X = 1812
 TICKET_Y = 205
 TICKET_COLOR = 0x5400FF
-; Ã¿ÈÕ³µÁ¾Õ½ÀûÆ·ËÑË÷Ïà¹Ø
+; æ¯æ—¥è½¦è¾†æˆ˜åˆ©å“æœç´¢ç›¸å…³
 DAILY_CAR_FEATURE_1_X = 221
 DAILY_CAR_FEATURE_1_Y = 888
 DAILY_CAR_FEATURE_1_COLOR = 0xD2D2D2
@@ -363,21 +119,21 @@ DAILY_CAR_FEATURE_4_COLOR = 0xC76529
 DAILY_CAR_GAP_W = 280
 DAILY_CAR_CLICK_X = 1920
 DAILY_CAR_CLICK_Y = 905
-; ×Ô¶¯/ÊÖ¶¯ÅĞ¶ÏÏà¹Ø
+; è‡ªåŠ¨/æ‰‹åŠ¨åˆ¤æ–­ç›¸å…³
 OPERATE_MODE_X = 2003
 OPERATE_MODE_Y = 840
 OPERATE_MODE_RANGE = 12
 
-; A9×¨ÓÃº¯Êı
+; A9ä¸“ç”¨å‡½æ•°
 
-CheckTime() ; ÓÃÓÚÏŞÖÆ½Å±¾ÔËĞĞÊ±¼ä£¬Ê±¼ä·¶Î§ÍâÍË³öA9£¬»Øµ½Ê±¼ä·¶Î§ÄÚÊ±Æô¶¯A9
+CheckTime() ; ç”¨äºé™åˆ¶è„šæœ¬è¿è¡Œæ—¶é—´ï¼Œæ—¶é—´èŒƒå›´å¤–é€€å‡ºA9ï¼Œå›åˆ°æ—¶é—´èŒƒå›´å†…æ—¶å¯åŠ¨A9
 {
 	global RUN_HOURS, DELY_SUPER_LONG
 	current := A_Hour
 	For k, hour in RUN_HOURS
 		if (hour - current = 0)
 			return
-	ShowTrayTip("µ±Ç°Ê±¶Î²»ÔËĞĞÓÎÏ·")
+	ShowTrayTip("å½“å‰æ—¶æ®µä¸è¿è¡Œæ¸¸æˆ")
 	CloseApp()
 	Loop
 	{
@@ -389,10 +145,10 @@ CheckTime() ; ÓÃÓÚÏŞÖÆ½Å±¾ÔËĞĞÊ±¼ä£¬Ê±¼ä·¶Î§ÍâÍË³öA9£¬»Øµ½Ê±¼ä·¶Î§ÄÚÊ±Æô¶¯A9
 	}
 }
 
-WaitUser() ; ÏÔÊ¾¿ªÊ¼ÔËĞĞµÄÌáÊ¾
+WaitUser() ; æ˜¾ç¤ºå¼€å§‹è¿è¡Œçš„æç¤º
 {
 	global DELY_SHORT
-	ShowTrayTip("3ÃëÄÚ×Ô¶¯¿ªÊ¼ÔËĞĞ")
+	ShowTrayTip("3ç§’å†…è‡ªåŠ¨å¼€å§‹è¿è¡Œ")
 	countdown = 15
 	while countdown > 0
 	{
@@ -401,7 +157,7 @@ WaitUser() ; ÏÔÊ¾¿ªÊ¼ÔËĞĞµÄÌáÊ¾
 	}
 }
 
-OpenApp() ; Æô¶¯A9
+OpenApp() ; å¯åŠ¨A9
 {
 	global
 	RunApp()
@@ -421,7 +177,7 @@ OpenApp() ; Æô¶¯A9
 	}
 }
 
-GoHome() ; »Øµ½A9Ê×Ò³(±ÈÈüÖĞ²»¿ÉÓÃ)£¬
+GoHome() ; å›åˆ°A9é¦–é¡µ(æ¯”èµ›ä¸­ä¸å¯ç”¨)ï¼Œ
 {
 	global
 	while CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
@@ -438,7 +194,7 @@ GoHome() ; »Øµ½A9Ê×Ò³(±ÈÈüÖĞ²»¿ÉÓÃ)£¬
 	}
 }
 
-RunDailyRace() ; ´ÓA9Ê×Ò³´ò¿ªÃ¿ÈÕ³µÁ¾Õ½ÀûÆ·ÈüÊÂ¡£Ö»ÒªÆ±´óÓÚÔ¤ÁôÖµ£¬¾Í¿ªÊ¼±ÈÈü£»ÔÚÆ±ÏûºÄµ½Ô¤ÁôÖµÊ±£¬¿ªÊ¼ÅÜÉúÑÄ
+RunDailyRace() ; ä»A9é¦–é¡µæ‰“å¼€æ¯æ—¥è½¦è¾†æˆ˜åˆ©å“èµ›äº‹ã€‚åªè¦ç¥¨å¤§äºé¢„ç•™å€¼ï¼Œå°±å¼€å§‹æ¯”èµ›ï¼›åœ¨ç¥¨æ¶ˆè€—åˆ°é¢„ç•™å€¼æ—¶ï¼Œå¼€å§‹è·‘ç”Ÿæ¶¯
 {
 	global
 	GoHome()
@@ -449,10 +205,10 @@ RunDailyRace() ; ´ÓA9Ê×Ò³´ò¿ªÃ¿ÈÕ³µÁ¾Õ½ÀûÆ·ÈüÊÂ¡£Ö»ÒªÆ±´óÓÚÔ¤ÁôÖµ£¬¾Í¿ªÊ¼±ÈÈü£»Ô
 	static tickets = 0
 	if (!CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR))
 		tickets := 10
-	if (tickets > TICKET_LIMIT) ; µ±Ç°Æ±´óÓÚÔ¤ÁôÖµ(Ò²¾ÍÊÇ»¹ÓĞÆ±¿ÉÓÃ)
+	if (tickets > TICKET_LIMIT) ; å½“å‰ç¥¨å¤§äºé¢„ç•™å€¼(ä¹Ÿå°±æ˜¯è¿˜æœ‰ç¥¨å¯ç”¨)
 	{
-		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, , DELY_MIDDLE) ; ÕâÀïÎªÁËÈÃÍ¼±êËõĞ¡µ½Í¬Ñù´óĞ¡£¬±ãÓÚÆ¥ÅäÌØÕ÷µã¡£Èç¹û±»µã»÷µÄÈüÊÂÊÇÒªÕÒµÄÄ¿±ê(ÓĞÊ±»á³öÏÖÂÒĞòÏÖÏó)£¬ÄÇ¾ÍÆ¥Åä²»µ½£¬Ö±½ÓÏÂ´ÎÔÙËµ
-		Loop 2 ; ÓĞÊ±ºò¸Õ½øÓÎÏ·¼ÓÔØ²»³öÀ´£¬ËùÒÔËÑË÷Á½´Î
+		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, , DELY_MIDDLE) ; è¿™é‡Œä¸ºäº†è®©å›¾æ ‡ç¼©å°åˆ°åŒæ ·å¤§å°ï¼Œä¾¿äºåŒ¹é…ç‰¹å¾ç‚¹ã€‚å¦‚æœè¢«ç‚¹å‡»çš„èµ›äº‹æ˜¯è¦æ‰¾çš„ç›®æ ‡(æœ‰æ—¶ä¼šå‡ºç°ä¹±åºç°è±¡)ï¼Œé‚£å°±åŒ¹é…ä¸åˆ°ï¼Œç›´æ¥ä¸‹æ¬¡å†è¯´
+		Loop 2 ; æœ‰æ—¶å€™åˆšè¿›æ¸¸æˆåŠ è½½ä¸å‡ºæ¥ï¼Œæ‰€ä»¥æœç´¢ä¸¤æ¬¡
 		{
 			local findDailyCar := false
 			Loop 6
@@ -486,7 +242,7 @@ RunDailyRace() ; ´ÓA9Ê×Ò³´ò¿ªÃ¿ÈÕ³µÁ¾Õ½ÀûÆ·ÈüÊÂ¡£Ö»ÒªÆ±´óÓÚÔ¤ÁôÖµ£¬¾Í¿ªÊ¼±ÈÈü£»Ô
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
 				local carIndex := 1
-				while (!StartRace(carIndex)) ; ÕâÀï¶¼Ã»ÓÍ¾ÍµÈ×Å
+				while (!StartRace(carIndex)) ; è¿™é‡Œéƒ½æ²¡æ²¹å°±ç­‰ç€
 					carIndex := Mod(A_Index, 6) + 1
 			}
 		}
@@ -494,7 +250,7 @@ RunDailyRace() ; ´ÓA9Ê×Ò³´ò¿ªÃ¿ÈÕ³µÁ¾Õ½ÀûÆ·ÈüÊÂ¡£Ö»ÒªÆ±´óÓÚÔ¤ÁôÖµ£¬¾Í¿ªÊ¼±ÈÈü£»Ô
 	RunCareerRace()
 }
 
-RunCareerRace() ; ´ÓÊ×Ò³´ò¿ª²¢¿ªÊ¼ÉúÑÄEUROÈü¼¾µÄµÚ12¸öÈüÊÂ£¬Èç¹û³¬¹ı10minÃ»ÅÜÈüÊÂ£¬»á¼ì²éÒ»´ÎÃ¿ÈÕÈüÊÂ
+RunCareerRace() ; ä»é¦–é¡µæ‰“å¼€å¹¶å¼€å§‹ç”Ÿæ¶¯EUROèµ›å­£çš„ç¬¬12ä¸ªèµ›äº‹ï¼Œå¦‚æœè¶…è¿‡10minæ²¡è·‘èµ›äº‹ï¼Œä¼šæ£€æŸ¥ä¸€æ¬¡æ¯æ—¥èµ›äº‹
 {
 	global
 	GoHome()
@@ -507,14 +263,14 @@ RunCareerRace() ; ´ÓÊ×Ò³´ò¿ª²¢¿ªÊ¼ÉúÑÄEUROÈü¼¾µÄµÚ12¸öÈüÊÂ£¬Èç¹û³¬¹ı10minÃ»ÅÜÈüÊ
 	local carArraySize := CAREER_CARS.MaxIndex()
 	while (lastDailyRaceTime + 600000 > A_TickCount)
 	{
-		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; µÈ´ı½øÈë
+		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; ç­‰å¾…è¿›å…¥
 		Loop 6
 			Swipe(1424, 200, 1415, 950)
 		Sleep DELY_VERY_SHORT
-		Loop 4 ; ½â¾ö»¬¶¯Îó²î£¬µ±Ç°ÆÁÄ»ÕÒ²»µ½EURO 12£¬¾Í¼ÌĞø»¬¶¯£¬ÖØ¸´4´ÎÕÒ²»µ½¾Í·ÅÆú
+		Loop 4 ; è§£å†³æ»‘åŠ¨è¯¯å·®ï¼Œå½“å‰å±å¹•æ‰¾ä¸åˆ°EURO 12ï¼Œå°±ç»§ç»­æ»‘åŠ¨ï¼Œé‡å¤4æ¬¡æ‰¾ä¸åˆ°å°±æ”¾å¼ƒ
 		{
 			local foundEuroRace := false
-			while (!foundEuroRace) ; ½â¾ö»¬¶¯Îó²î£¬ÔÚµ±Ç°ÆÁÄ»ÄÚ²éÕÒEURO 12
+			while (!foundEuroRace) ; è§£å†³æ»‘åŠ¨è¯¯å·®ï¼Œåœ¨å½“å‰å±å¹•å†…æŸ¥æ‰¾EURO 12
 			{
 				local yDevition := (A_Index - 1) * EURO_RACE_Y_DEVIATION
 				if CheckPixel(EURO_RACE_X, EURO_RACE_Y + yDevition, EURO_RACE_COLOR)
@@ -544,7 +300,7 @@ RunCareerRace() ; ´ÓÊ×Ò³´ò¿ª²¢¿ªÊ¼ÉúÑÄEUROÈü¼¾µÄµÚ12¸öÈüÊÂ£¬Èç¹û³¬¹ı10minÃ»ÅÜÈüÊ
 			carArrayIndex := Mod(A_Index, carArraySize) + 1
 			if (A_Index > carArraySize * 2)
 			{
-				ShowTrayTip("ÎŞ¿ÉÓÃ³µÁ¾")
+				ShowTrayTip("æ— å¯ç”¨è½¦è¾†")
 				Break
 			}
 		}
@@ -554,18 +310,18 @@ RunCareerRace() ; ´ÓÊ×Ò³´ò¿ª²¢¿ªÊ¼ÉúÑÄEUROÈü¼¾µÄµÚ12¸öÈüÊÂ£¬Èç¹û³¬¹ı10minÃ»ÅÜÈüÊ
 	RunDailyRace()
 }
 
-StartRace(indexOfCar, waitTime:=20) ; ¿ªÊ¼±ÈÈü£¬ĞèÒªÖ¸¶¨ÓÃµÚ¼¸Á¾³µ£¬Ä¿Ç°½öÊÊÓÃÓÚ¶à³µ¿ÉÑ¡µÄÈüÊÂ£¬waitTime£º¼ì²âÈüÊÂ¿ªÊ¼Óë·ñµÄ²Ù×÷³¬Ê±Ê±¼ä£¬Ä¬ÈÏ20Ãë
+StartRace(indexOfCar, waitTime:=20) ; å¼€å§‹æ¯”èµ›ï¼Œéœ€è¦æŒ‡å®šç”¨ç¬¬å‡ è¾†è½¦ï¼Œç›®å‰ä»…é€‚ç”¨äºå¤šè½¦å¯é€‰çš„èµ›äº‹ï¼ŒwaitTimeï¼šæ£€æµ‹èµ›äº‹å¼€å§‹ä¸å¦çš„æ“ä½œè¶…æ—¶æ—¶é—´ï¼Œé»˜è®¤20ç§’
 {
 	global
 	CheckTime()
-	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; ÖØÖÃ³µÁ¾Î»ÖÃ£¬Èç¹û»¬¶¯´ÎÊı³¬¹ı10´Î£¬ÄÇÃ´ËµÃ÷²»Õı³££¬¾ÍÒªÖØÖÃ½Å±¾
+	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; é‡ç½®è½¦è¾†ä½ç½®ï¼Œå¦‚æœæ»‘åŠ¨æ¬¡æ•°è¶…è¿‡10æ¬¡ï¼Œé‚£ä¹ˆè¯´æ˜ä¸æ­£å¸¸ï¼Œå°±è¦é‡ç½®è„šæœ¬
 		|| !CheckPixel(CAR_HEAD_2_X, CAR_HEAD_2_Y, CAR_HEAD_2_COLOR))
 	{
 		if A_Index > 10
 			Reload
 		Swipe(239, 503, 1837, 511)
 	}
-	ToolTip ÕıÔÚ¼ì²éµÚ%indexOfCar%Á¾³µ
+	ToolTip æ­£åœ¨æ£€æŸ¥ç¬¬%indexOfCar%è¾†è½¦
 	Sleep DELY_SHORT
 	local relativePos := indexOfCar
 	while relativePos > 6
@@ -594,16 +350,16 @@ StartRace(indexOfCar, waitTime:=20) ; ¿ªÊ¼±ÈÈü£¬ĞèÒªÖ¸¶¨ÓÃµÚ¼¸Á¾³µ£¬Ä¿Ç°½öÊÊÓÃÓÚ
 	if !CheckOperateMode()
 		RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELY_LONG, 3)
 	RandomClick(NEXT_X, NEXT_Y, , DELY_SUPER_LONG)
-	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; ¼ì²â±ÈÈüÊÇ·ñÒÑ¿ªÊ¼£¬»òÕß³¬¹ıÉè¶¨ÖµÇ¿ÖÆÊÓÎªÒÑ¿ªÊ¼
+	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; æ£€æµ‹æ¯”èµ›æ˜¯å¦å·²å¼€å§‹ï¼Œæˆ–è€…è¶…è¿‡è®¾å®šå€¼å¼ºåˆ¶è§†ä¸ºå·²å¼€å§‹
 	{
 		if (A_Index > waitTime)
 		{
-			ShowTrayTip("ÎŞ·¨¼ì²â±ÈÈüÊÇ·ñÒÑ¾­¿ªÊ¼£¬ÏÖÔÚ°´ÕÕÒÑ¿ªÊ¼´¦Àí")
+			ShowTrayTip("æ— æ³•æ£€æµ‹æ¯”èµ›æ˜¯å¦å·²ç»å¼€å§‹ï¼Œç°åœ¨æŒ‰ç…§å·²å¼€å§‹å¤„ç†")
 			Break
 		}
 		Sleep DELY_MIDDLE
 	}
-	local maxRaceTime := A_TickCount + 300000 ; Éè¶¨±ÈÈü³¬Ê±Ê±¼ä5·ÖÖÓ£¬³¬Ê±ºóÖØÖÃ½Å±¾
+	local maxRaceTime := A_TickCount + 300000 ; è®¾å®šæ¯”èµ›è¶…æ—¶æ—¶é—´5åˆ†é’Ÿï¼Œè¶…æ—¶åé‡ç½®è„šæœ¬
 	local dt
 	Loop
 	{
@@ -615,9 +371,9 @@ StartRace(indexOfCar, waitTime:=20) ; ¿ªÊ¼±ÈÈü£¬ĞèÒªÖ¸¶¨ÓÃµÚ¼¸Á¾³µ£¬Ä¿Ç°½öÊÊÓÃÓÚ
 			RandomClick(NITRO_X, NITRO_Y, dt, DELY_MIDDLE)
 		else if dt < 450
 			RandomClick(BRAKE_X, BRAKE_Y, dt, DELY_LONG)
-		if (dt > 0 && dt < 100) ; 1/7 Ñ¡ÓÒ±ß
+		if (dt > 0 && dt < 100) ; 1/7 é€‰å³è¾¹
 			Swipe(1825, 530, 1884, 532)
-		else if (dt > 0 && dt < 200) ; 1/7 Ñ¡×ó±ß
+		else if (dt > 0 && dt < 200) ; 1/7 é€‰å·¦è¾¹
 			Swipe(1884, 530, 1825, 532)
 		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR)
 			Break
@@ -629,9 +385,9 @@ StartRace(indexOfCar, waitTime:=20) ; ¿ªÊ¼±ÈÈü£¬ĞèÒªÖ¸¶¨ÓÃµÚ¼¸Á¾³µ£¬Ä¿Ç°½öÊÊÓÃÓÚ
 	{
 		local checkBack := CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
 		local checkNext := CheckPixel(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK)
-		local checkNext2 := checkNext ? false : CheckPixel(NEXT_X_2, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK) ; ÓĞÊ±¼ÌĞø°´Å¥Î»ÖÃ±È½ÏÔ¶£¬¶à¼ÓÁË¸öÎ»ÖÃÅĞ¶Ï
-		local checkNext3 := checkNext2 ? false : CheckPixel(NEXT_X_3, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK) ; ´ïµ½¾ãÀÖ²¿Àï³Ì±®£¬Ôİ²»ÁìÈ¡
-		if (checkBack) ; Í¬Ê±³öÏÖ·µ»Ø°´Å¥ºÍ¼ÌĞø°´Å¥Ê±ËµÃ÷ÒÑ¾­»Øµ½Ñ¡³µÇ°Ò³Ãæ£¬ÕâÀï¼Ó3´ÎÊÇÎªÁË±ÜÃâÁì½±ÀøÒı·¢ÎóÅĞ
+		local checkNext2 := checkNext ? false : CheckPixel(NEXT_X_2, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK) ; æœ‰æ—¶ç»§ç»­æŒ‰é’®ä½ç½®æ¯”è¾ƒè¿œï¼Œå¤šåŠ äº†ä¸ªä½ç½®åˆ¤æ–­
+		local checkNext3 := checkNext2 ? false : CheckPixel(NEXT_X_3, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK) ; è¾¾åˆ°ä¿±ä¹éƒ¨é‡Œç¨‹ç¢‘ï¼Œæš‚ä¸é¢†å–
+		if (checkBack) ; åŒæ—¶å‡ºç°è¿”å›æŒ‰é’®å’Œç»§ç»­æŒ‰é’®æ—¶è¯´æ˜å·²ç»å›åˆ°é€‰è½¦å‰é¡µé¢ï¼Œè¿™é‡ŒåŠ 3æ¬¡æ˜¯ä¸ºäº†é¿å…é¢†å¥–åŠ±å¼•å‘è¯¯åˆ¤
 		{
 			successCount++
 			Sleep DELY_SHORT
@@ -648,24 +404,24 @@ StartRace(indexOfCar, waitTime:=20) ; ¿ªÊ¼±ÈÈü£¬ĞèÒªÖ¸¶¨ÓÃµÚ¼¸Á¾³µ£¬Ä¿Ç°½öÊÊÓÃÓÚ
 	return true
 }
 
-CheckOperateMode() ; ¼ì²é²Ù×÷Ä£Ê½ÊÇ·ñÊÇ×Ô¶¯µ²
+CheckOperateMode() ; æ£€æŸ¥æ“ä½œæ¨¡å¼æ˜¯å¦æ˜¯è‡ªåŠ¨æŒ¡
 {
 	global OPERATE_MODE_X, OPERATE_MODE_Y, OPERATE_MODE_RANGE
 	operateModeX := OPERATE_MODE_X
 	operateModeY := OPERATE_MODE_Y
-	Loop %OPERATE_MODE_RANGE% ; ÅĞ¶Ï²Ù×÷Ä£Ê½ÊÇ·ñÎªÊÖ¶¯
+	Loop %OPERATE_MODE_RANGE% ; åˆ¤æ–­æ“ä½œæ¨¡å¼æ˜¯å¦ä¸ºæ‰‹åŠ¨
 	{
 		operateModeColor := GetPixel(operateModeX, operateModeY)
-		if ((operateModeColor & 0xFF00) > 0x7FFF) ; ¼´£ºÂÌÉ« > 127
+		if ((operateModeColor & 0xFF00) > 0x7FFF) ; å³ï¼šç»¿è‰² > 127
 			return true
 	}
 	return false
 }
 
-Init() ; ½Å±¾Ö÷Âß¼­
+Init() ; è„šæœ¬ä¸»é€»è¾‘
 {
 	OnExit RevertControlSetting
-	ShowTrayTip("½Å±¾¿ªÊ¼ÔËĞĞ`n¿ÉÒÔ×ÔÓÉµ÷Õû´°¿Ú´óĞ¡Î»ÖÃ")
+	ShowTrayTip("è„šæœ¬å¼€å§‹è¿è¡Œ`nå¯ä»¥è‡ªç”±è°ƒæ•´çª—å£å¤§å°ä½ç½®")
 	WaitWin()
 	CalcWin()
 	ResizeWin()
@@ -678,29 +434,29 @@ Init() ; ½Å±¾Ö÷Âß¼­
 Init()
 return
 
-; ÈÈ¼ü
+; çƒ­é”®
 
-^F8::Pause ; ÔİÍ£/»Ö¸´
-^F9::Reload ; ÖØÖÃ
-^F10:: ; ¹Ø±ÕA9²¢ÍË³ö
+^F8::Pause ; æš‚åœ/æ¢å¤
+^F9::Reload ; é‡ç½®
+^F10:: ; å…³é—­A9å¹¶é€€å‡º
 Gosub RevertControlSetting
 CloseApp()
 ExitApp
 return
-^F11::ExitApp ; ½öÍË³ö
+^F11::ExitApp ; ä»…é€€å‡º
 Gosub RevertControlSetting
 ExitApp
 return
-^F12::ExitApp ; Ç¿ÖÆÍË³ö
+^F12::ExitApp ; å¼ºåˆ¶é€€å‡º
 
-; ÊÂ¼ş´¦Àí
+; äº‹ä»¶å¤„ç†
 
-RevertControlSetting: ; ÍË³öÊ±£¬Èç¹ûÊÇ
-if A_ExitReason in Logoff,Shutdown,Close,Menu ; ÔÚÕâĞĞÓï¾äÖĞ, ×¢Òâ²»ÒªÔÚ¶ººÅÖÜÎ§º¬ÓĞ¿Õ¸ñ
+RevertControlSetting: ; é€€å‡ºæ—¶ï¼Œå¦‚æœæ˜¯
+if A_ExitReason in Logoff,Shutdown,Close,Menu ; åœ¨è¿™è¡Œè¯­å¥ä¸­, æ³¨æ„ä¸è¦åœ¨é€—å·å‘¨å›´å«æœ‰ç©ºæ ¼
 {
 	if (OPERATE_MODE = 1)
 	{
-		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; ±ÈÈüÖĞÔòÏÈÍË³ö±ÈÈü£¬Èç¹û±ÈÈüÖĞ¼ì²âÊ§Ğ§£¬ÄÇÕâÀï²»»áÕıÈ·¸Ä»Ø²Ù×÷Ä£Ê½
+		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; æ¯”èµ›ä¸­åˆ™å…ˆé€€å‡ºæ¯”èµ›ï¼Œå¦‚æœæ¯”èµ›ä¸­æ£€æµ‹å¤±æ•ˆï¼Œé‚£è¿™é‡Œä¸ä¼šæ­£ç¡®æ”¹å›æ“ä½œæ¨¡å¼
 		{
 			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
 			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_VERY_LONG, 3)
@@ -722,4 +478,3 @@ if A_ExitReason in Logoff,Shutdown,Close,Menu ; ÔÚÕâĞĞÓï¾äÖĞ, ×¢Òâ²»ÒªÔÚ¶ººÅÖÜÎ§
 	}
 }
 return
-
