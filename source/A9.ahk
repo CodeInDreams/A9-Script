@@ -424,10 +424,10 @@ Init() ; 脚本主逻辑
 	ShowTrayTip("脚本开始运行`n可以自由调整窗口大小位置")
 	WaitWin()
 	CalcWin()
-	ResizeWin()
+	;ResizeWin()
 	;WaitUser()
-	;CloseApp()
-	;OpenApp()
+	CloseApp()
+	OpenApp()
 	RunDailyRace()
 }
 
