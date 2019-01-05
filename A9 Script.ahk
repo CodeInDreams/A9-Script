@@ -5,12 +5,12 @@
 
 SetWorkingDir %A_ScriptDir%
 
-A9_FILE_NAME = A9.ahk
-COMMONS_FILE_NAME = Commons.ahk
-NEMU_FILE_NAME = NEMU.ahk
-BLUESTACKS_FILE_NAME = BlueStacks.ahk
+A9_FILE_NAME = source`\A9.ahk
+COMMONS_FILE_NAME = source`\Commons.ahk
+NEMU_FILE_NAME = source`\NEMU.ahk
+BLUESTACKS_FILE_NAME = source`\BlueStacks.ahk
 CONFIG_FILE_NAME = Config.ahk
-GENERATED_FILE_NAME = A9-Script.ahk
+GENERATED_FILE_NAME = source`\A9-Script.ahk
 NEMU_AHK_CLASS = Qt5QWindowIcon
 BLUESTACKS_AHK_EXE = Bluestacks.exe
 LINEBREAK = `r`n
