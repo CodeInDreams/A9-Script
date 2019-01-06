@@ -4,7 +4,7 @@
 */
 
 ; 操作模式，0自动，1手动，设置为手动来在关闭时切换回手动模式
-OPERATE_MODE = 1
+OPERATE_MODE = 0
 ; 应用是顶栏的"首页"后的第几个窗口
 APP_INDEX = 1
 ; 票预留上限，0~10，建议小于9以免浪费浪费票
@@ -664,14 +664,14 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 
 Init() ; 脚本主逻辑
 {
-	OnExit RevertControlSetting
+	;OnExit RevertControlSetting
 	ShowTrayTip("脚本开始运行`n可以自由调整窗口大小位置")
 	WaitWin()
 	CalcWin()
-	ResizeWin()
+	;ResizeWin()
 	;WaitUser()
-	;CloseApp()
-	;OpenApp()
+	CloseApp()
+	OpenApp()
 	RunDailyRace()
 }
 

@@ -134,7 +134,6 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 		if (hour - current = 0)
 			return
 	ShowTrayTip("当前时段不运行游戏")
-	RevertControlSetting()
 	CloseApp()
 	Loop
 	{
@@ -465,12 +464,12 @@ return
 ^F8::Pause ; 暂停/恢复
 ^F9::Reload ; 重置
 ^F10:: ; 关闭A9并退出
-RevertControlSetting()
+Gosub RevertControlSetting
 CloseApp()
 ExitApp
 return
 ^F11:: ; 仅退出
-RevertControlSetting()
+Gosub RevertControlSetting
 ExitApp
 return
 ^F12::ExitApp ; 强制退出

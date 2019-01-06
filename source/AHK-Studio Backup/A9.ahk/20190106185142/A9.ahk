@@ -134,7 +134,6 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 		if (hour - current = 0)
 			return
 	ShowTrayTip("当前时段不运行游戏")
-	RevertControlSetting()
 	CloseApp()
 	Loop
 	{
@@ -419,7 +418,7 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 	return false
 }
 
-RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目前在赛事开始前读取时和赛事结束后下一步时不可用
+RevertControlSetting() 如果是手动挡，恢复操作模式为手动
 {
 	if (OPERATE_MODE = 1)
 	{
@@ -427,7 +426,7 @@ RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目�
 		{
 			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
 			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_VERY_LONG, 3)
-		} 
+		}
 		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 			return
 		GoHome()
@@ -465,12 +464,12 @@ return
 ^F8::Pause ; 暂停/恢复
 ^F9::Reload ; 重置
 ^F10:: ; 关闭A9并退出
-RevertControlSetting()
+Gosub RevertControlSetting
 CloseApp()
 ExitApp
 return
 ^F11:: ; 仅退出
-RevertControlSetting()
+Gosub RevertControlSetting
 ExitApp
 return
 ^F12::ExitApp ; 强制退出
