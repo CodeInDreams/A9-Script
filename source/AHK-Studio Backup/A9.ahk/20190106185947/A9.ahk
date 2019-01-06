@@ -134,7 +134,6 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 		if (hour - current = 0)
 			return
 	ShowTrayTip("当前时段不运行游戏")
-	RevertControlSetting()
 	CloseApp()
 	Loop
 	{

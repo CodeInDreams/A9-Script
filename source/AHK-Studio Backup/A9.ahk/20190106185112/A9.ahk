@@ -134,7 +134,6 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 		if (hour - current = 0)
 			return
 	ShowTrayTip("当前时段不运行游戏")
-	RevertControlSetting()
 	CloseApp()
 	Loop
 	{
@@ -419,32 +418,6 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 	return false
 }
 
-RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目前在赛事开始前读取时和赛事结束后下一步时不可用
-{
-	if (OPERATE_MODE = 1)
-	{
-		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; 比赛中则先退出比赛，如果比赛中检测失效，那这里不会正确改回操作模式
-		{
-			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
-			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_VERY_LONG, 3)
-		} 
-		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
-			return
-		GoHome()
-		if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)
-			RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
-		RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
-		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
-		RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELY_SHORT, DELY_SHORT, 2)
-		RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELY_MIDDLE)
-		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
-		RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
-		RandomClick(CAR_FIRST_OIL_X - 220, CAR_UPPER_OIL_Y - 150, , DELY_LONG)
-		if CheckOperateMode()
-			RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELY_LONG, 3)
-	}
-}
-
 Init() ; 脚本主逻辑
 {
 	ShowTrayTip("脚本开始运行`n可以自由调整窗口大小位置")
@@ -465,12 +438,40 @@ return
 ^F8::Pause ; 暂停/恢复
 ^F9::Reload ; 重置
 ^F10:: ; 关闭A9并退出
-RevertControlSetting()
+Gosub RevertControlSetting
 CloseApp()
 ExitApp
 return
 ^F11:: ; 仅退出
-RevertControlSetting()
+Gosub RevertControlSetting
 ExitApp
 return
 ^F12::ExitApp ; 强制退出
+
+; 事件处理
+
+RevertControlSetting(); 退出时，如果是
+{
+	if (OPERATE_MODE = 1)
+	{
+		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; 比赛中则先退出比赛，如果比赛中检测失效，那这里不会正确改回操作模式
+		{
+			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
+			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_VERY_LONG, 3)
+		}
+		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+			return
+		GoHome()
+		if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)
+			RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
+		RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELY_MIDDLE)
+		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+		RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELY_SHORT, DELY_SHORT, 2)
+		RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELY_MIDDLE)
+		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
+		RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
+		RandomClick(CAR_FIRST_OIL_X - 220, CAR_UPPER_OIL_Y - 150, , DELY_LONG)
+		if CheckOperateMode()
+			RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELY_LONG, 3)
+	}
+}
