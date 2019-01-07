@@ -20,7 +20,7 @@ This project is licensed under the terms of the GPL license. See full license in
 1. 配置环境、更改脚本设置（Config.ahk）
 1. 双击运行模拟器和脚本（A9 Script.ahk）
 #### 详细步骤：
-1. 安装最新版的AutoHotKey（官网下载地址：https://www.autohotkey.com/download/ahk-install.exe）
+1. 安装最新版的AutoHotKey，官网下载地址：https://www.autohotkey.com/download/ahk-install.exe
 1. 安装模拟器，同时自行安装好科学上网软件
 1. 安装好A9并登录Play账号同步数据
 1. 根据需要自行修改Config.ahk中的配置（每个配置都有详细的解释）
