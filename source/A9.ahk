@@ -6,10 +6,12 @@
 #NoEnv
 #SingleInstance Force
 #Persistent
+SetMouseDelay -1
+SetBatchLines -1
 Process Priority, , High
-SendMode Input
+;SendMode Input
 SetWorkingDir %A_ScriptDir%
-;Icon 
+;Icon source\icon.ico
 CoordMode Pixel, Client
 CoordMode Mouse, Client
 
