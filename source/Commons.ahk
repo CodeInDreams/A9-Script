@@ -164,19 +164,20 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证精确，1：精确但不够快
 {
 	CalcWin()
-	global AH, VH, DELY_SHORT
+	global AH, VH, DELY_VERY_SHORT
 	dragFromX := GetX(fromX)
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
 	dragToY := GetY(toY)
+	SetMouseDelay -1
 	Click %dragFromX%, %dragFromY%, D
 	dx := Abs(dragToX - dragFromX)
 	dy := Abs(dragToY - dragFromY)
 	part := (dx > dy ? dx : dy)
-	dxPart := dx // part
+	dxPart := dx / part
 	if (dragFromX > dragToX)
 		dxPart := -dxPart
-	dyPart := dy // part
+	dyPart := dy / part
 	if (dragFromY > dragToY)
 		dyPart := -dyPart
 	Loop %part%
@@ -186,8 +187,10 @@ Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证�
 			Sleep 1
 	}
 	MouseMove dragToX, dragToY
-	Sleep DELY_SHORT
+	Sleep DELY_VERY_SHORT
 	Click %dragToX%, %dragToY%, U
+	SetMouseDelay 10ms
+	Sleep DELY_VERY_SHORT
 }
 
 ShowTrayTip(text, period:=1000) ; 显示period毫秒的托盘区提示
