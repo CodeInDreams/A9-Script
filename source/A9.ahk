@@ -6,7 +6,7 @@
 #NoEnv
 #SingleInstance Force
 #Persistent
-SetMouseDelay -1
+;SetMouseDelay -1
 SetBatchLines -1
 Process Priority, , High
 ;SendMode Input
