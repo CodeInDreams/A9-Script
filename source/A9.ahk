@@ -6,7 +6,6 @@
 #NoEnv
 #SingleInstance Force
 #Persistent
-;SetMouseDelay -1
 SetBatchLines -1
 Process Priority, , High
 ;SendMode Input
@@ -415,7 +414,7 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 	Loop %OPERATE_MODE_RANGE% ; 判断操作模式是否为手动
 	{
 		operateModeColor := GetPixel(operateModeX, operateModeY)
-		if ((operateModeColor & 0xFF00) > 0x7FFF) ; 即：绿色 > 127
+		if ((operateModeColor & 0xFF00) > 0x3FFF) ; 即：绿色 > 63
 			return true
 	}
 	return false
