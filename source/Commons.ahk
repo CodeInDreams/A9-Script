@@ -92,14 +92,23 @@ GetPixel(x, y) ; 获取像素
 
 CheckPixel(x, y, colors*) ; 验证像素颜色
 {
+	deviation := 10 ; 由于模拟器渲染问题，这里允许少量误差
 	pixel := GetPixel(x, y)
+	pr := pixel & 0xFF
+	pg := (pixel & 0xFF00) >> 8
+	pb := pixel >> 16
 	For k, color in colors
-		if (pixel = color)
+	{
+		cr := color & 0xFF
+		cg := (color & 0xFF00) >> 8
+		cb := color >> 16
+		if (Abs(pr - cr + pg - cg + pb - cb) < deviation)
 			return true
+	}
 	return false
 }
 
-CheckPixelWithDeviation(x, y, color, deviation:=100) ; 验证像素颜色，允许误差
+CheckPixelWithDeviation(x, y, color, deviation:=200) ; 验证像素颜色，允许误差
 {
 	pixel := GetPixel(x, y)
 	pr := pixel & 0xFF
@@ -108,7 +117,7 @@ CheckPixelWithDeviation(x, y, color, deviation:=100) ; 验证像素颜色，允�
 	cr := color & 0xFF
 	cg := (color & 0xFF00) >> 8
 	cb := color >> 16
-	return (Abs(pr - cr) < deviation && Abs(pb - cg) < deviation && Abs(pb - cb) < deviation)
+	return (Abs(pr - cr + pg - cg + pb - cb) < deviation)
 }
 
 WaitColor(x, y, color*) ; 等待目标位置出现指定颜色的像素，检测10次后仍不出现就重置脚本

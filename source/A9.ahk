@@ -454,8 +454,8 @@ Init() ; 脚本主逻辑
 	CalcWin()
 	;ResizeWin()
 	;WaitUser()
-	CloseApp()
-	OpenApp()
+	;CloseApp()
+	;OpenApp()
 	RunDailyRace()
 }
 
