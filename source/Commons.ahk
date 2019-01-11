@@ -9,12 +9,12 @@ AW = ; 实际游戏宽度
 AH = ; 实际游戏高度
 VW = 2160 ; 100%游戏宽度，实际可能会放缩
 VH = 1080 ; 100%游戏高度，实际可能会放缩
-DELY_VERY_SHORT = 200 ; 等待时间，很短
-DELY_SHORT = 500 ; 等待时间，短
-DELY_MIDDLE = 1000 ; 等待时间，中等
-DELY_LONG = 2000 ; 等待时间，长
-DELY_VERY_LONG = 3000 ; 等待时间，很长
-DELY_SUPER_LONG = 15000 ; 等待时间，超级长
+DELAY_VERY_SHORT = 200 ; 等待时间，很短
+DELAY_SHORT = 500 ; 等待时间，短
+DELAY_MIDDLE = 1000 ; 等待时间，中等
+DELAY_LONG = 2000 ; 等待时间，长
+DELAY_VERY_LONG = 3000 ; 等待时间，很长
+DELAY_SUPER_LONG = 15000 ; 等待时间，超级长
 
 WaitWin() ; 等待模拟器运行
 {
@@ -122,23 +122,23 @@ CheckPixelWithDeviation(x, y, color, deviation:=100) ; 验证像素颜色，允�
 
 WaitColor(x, y, color*) ; 等待目标位置出现指定颜色的像素，检测10次后仍不出现就重置脚本
 {
-	global HDELY_SHORT, DELY_MIDDLE, DELY_LONG, DELY_VERY_LONG
-	dt = DELY_SHORT
+	global DELAY_SHORT, DELAY_MIDDLE, DELAY_LONG, DELAY_VERY_LONG
+	dt = DELAY_SHORT
 	Loop 10
 	{
 		For k, v in color
 			if CheckPixel(x, y, v)
 				return
 		if A_Index > 5
-			dt += DELY_MIDDLE
+			dt += DELAY_MIDDLE
 		Sleep dt
 	}
-	ShowTrayTip("检测不到特征值，脚本即将重置", DELY_LONG)
-	Sleep DELY_LONG
+	ShowTrayTip("检测不到特征值，脚本即将重置", DELAY_LONG)
+	Sleep DELAY_LONG
 	Reload
-	Sleep DELY_VERY_LONG
-	ShowTrayTip("重置失败，脚本即将退出", DELY_LONG)
-	Sleep DELY_LONG
+	Sleep DELAY_VERY_LONG
+	ShowTrayTip("重置失败，脚本即将退出", DELAY_LONG)
+	Sleep DELAY_LONG
 	ExitApp
 }
 
@@ -164,7 +164,7 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证精确，1：精确但不够快
 {
 	CalcWin()
-	global AH, VH, DELY_VERY_SHORT
+	global AH, VH, DELAY_VERY_SHORT
 	dragFromX := GetX(fromX)
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
@@ -187,10 +187,10 @@ Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证�
 			Sleep 1
 	}
 	MouseMove dragToX, dragToY
-	Sleep DELY_VERY_SHORT
+	Sleep DELAY_VERY_SHORT
 	Click %dragToX%, %dragToY%, U
 	SetMouseDelay 10ms
-	Sleep DELY_VERY_SHORT
+	Sleep DELAY_VERY_SHORT
 }
 
 ShowTrayTip(text, period:=1000) ; 显示period毫秒的托盘区提示
