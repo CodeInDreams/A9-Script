@@ -124,6 +124,8 @@ DAILY_CAR_CLICK_Y = 905
 OPERATE_MODE_X = 2003
 OPERATE_MODE_Y = 840
 OPERATE_MODE_RANGE = 12
+; 每日车辆用车顺序
+DAILY_CARS := [1, 5, 2, 3, 4, 6]
 
 ; A9专用函数
 
@@ -151,11 +153,22 @@ WaitUser() ; 显示开始运行的提示
 {
 	global DELY_SHORT
 	ShowTrayTip("3秒内自动开始运行")
-	countdown = 15
+	countdown := 3000 // DELY_SHORT
 	while countdown > 0
 	{
 		Sleep DELY_SHORT
 		countdown -= 1
+	}
+}
+
+WaitSaleAd() ; 消除促销广告弹窗
+{
+	global DELY_MIDDLE, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, SALE_AD_X, SALE_AD_Y
+	Sleep DELY_MIDDLE
+	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+	{
+		IfGreater A_Index, 10, Reload
+		RandomClick(SALE_AD_X, SALE_AD_Y, , DELY_MIDDLE)
 	}
 }
 
@@ -188,12 +201,7 @@ GoHome() ; 回到A9首页(比赛中不可用)，
 		IfGreater A_Index, 10, Reload
 		RandomClick(HOME_X, HOME_Y, , DELY_MIDDLE)
 	}
-	Sleep DELY_MIDDLE
-	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
-	{
-		IfGreater A_Index, 10, Reload
-		RandomClick(SALE_AD_X, SALE_AD_Y, , DELY_MIDDLE)
-	}
+	WaitSaleAd()
 }
 
 RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛；在票消耗到预留值时，开始跑生涯
@@ -203,7 +211,8 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 	lastDailyRaceTime := A_TickCount
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
 		RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELY_MIDDLE)
-	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELY_LONG)
+	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELY_MIDDLE)
+	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	static tickets = 0
 	if (!CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR))
 		tickets := 10
@@ -233,6 +242,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 			Sleep DELY_VERY_LONG
 			Sleep DELY_VERY_LONG
 		}
+		local carArraySize := DAILY_CARS.MaxIndex()
 		if (findDailyCar)
 		{
 			RandomClick(dailyRaceX, dailyRaceY, , DELY_MIDDLE)
@@ -241,18 +251,24 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 			{
 				tickets -= 1
 				lastDailyRaceTime := A_TickCount
+				WaitSaleAd()
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
-				local carIndex := 1
-				while (!StartRace(carIndex)) ; 这里都没油就等着
-					carIndex := Mod(A_Index, 6) + 1
+				while (!StartRace(DAILY_CARS[A_Index], 30, 50))
+				{
+					if (A_Index >= carArraySize)
+					{
+						ShowTrayTip("无可用车辆")
+						RunCareerRace()
+					}
+				}
 			}
 		}
 	}
 	RunCareerRace()
 }
 
-RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，如果超过10min没跑赛事，会检查一次每日赛事
+RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，当连续跑生涯超过10min时，检查一次每日赛事
 {
 	global
 	GoHome()
@@ -265,6 +281,7 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	local carArraySize := CAREER_CARS.MaxIndex()
 	while (lastDailyRaceTime + 600000 > A_TickCount)
 	{
+		WaitSaleAd()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
 		Loop 6
 			Swipe(1424, 200, 1415, 950)
@@ -296,14 +313,12 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 			RunDailyRace()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_LONG)
-		local carArrayIndex := 1
-		while (!StartRace(CAREER_CARS[carArrayIndex]))
+		while (!StartRace(CAREER_CARS[A_Index], 30, 90))
 		{
-			carArrayIndex := Mod(A_Index, carArraySize) + 1
-			if (A_Index > carArraySize * 2)
+			if (A_Index >= carArraySize)
 			{
 				ShowTrayTip("无可用车辆")
-				Break
+				RunDailyRace()
 			}
 		}
 		ShowTrayTip("+2400")
@@ -312,7 +327,7 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	RunDailyRace()
 }
 
-StartRace(indexOfCar, waitTime:=20) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitTime：检测赛事开始与否的操作超时时间，默认20秒
+StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
 {
 	global
 	CheckTime()
@@ -354,14 +369,14 @@ StartRace(indexOfCar, waitTime:=20) ; 开始比赛，需要指定用第几辆车
 	RandomClick(NEXT_X, NEXT_Y, , DELY_SUPER_LONG)
 	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
 	{
-		if (A_Index > waitTime)
+		if (A_Index > waitStartTime)
 		{
 			ShowTrayTip("无法检测比赛是否已经开始，现在按照已开始处理")
 			Break
 		}
 		Sleep DELY_MIDDLE
 	}
-	local maxRaceTime := A_TickCount + 300000 ; 设定比赛超时时间5分钟，超时后重置脚本
+	local raceTimeLimit := A_TickCount + maxRaceTime * 1000 ; 超时后重置脚本
 	local dt
 	Loop
 	{
@@ -379,11 +394,11 @@ StartRace(indexOfCar, waitTime:=20) ; 开始比赛，需要指定用第几辆车
 			Swipe(1884, 530, 1825, 532)
 		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR)
 			Break
-		if (A_TickCount > maxRaceTime)
+		if (A_TickCount > raceTimeLimit)
 			Reload
 	}
 	local successCount = 0
-	while (successCount < 3 || A_Index > 100)
+	while (successCount < 3 && A_Index < 100)
 	{
 		local checkBack := CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
 		local checkNext := CheckPixel(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK)
@@ -428,7 +443,7 @@ RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目�
 		{
 			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELY_MIDDLE, 3)
 			RandomClick(NEXT_X, NEXT_Y, DELY_SHORT, DELY_VERY_LONG, 3)
-		} 
+		}
 		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 			return
 		GoHome()
@@ -453,8 +468,8 @@ Init() ; 脚本主逻辑
 	CalcWin()
 	;ResizeWin()
 	;WaitUser()
-	CloseApp()
-	OpenApp()
+	;CloseApp()
+	;OpenApp()
 	RunDailyRace()
 }
 
