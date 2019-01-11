@@ -24,7 +24,7 @@ CloseApp() ; 关闭A9
 
 RunApp() ; 启动A9
 {
-	global RUN_COMMAND, DELY_SUPER_LONG
+	global RUN_COMMAND, DELAY_SUPER_LONG
 	Run %RUN_COMMAND%
-	Sleep DELY_SUPER_LONG
+	Sleep DELAY_SUPER_LONG
 }
