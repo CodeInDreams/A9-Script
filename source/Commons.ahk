@@ -108,7 +108,7 @@ CheckPixel(x, y, colors*) ; 验证像素颜色
 	return false
 }
 
-CheckPixelWithDeviation(x, y, color, deviation:=200) ; 验证像素颜色，允许误差
+CheckPixelWithDeviation(x, y, color, deviation:=100) ; 验证像素颜色，允许误差
 {
 	pixel := GetPixel(x, y)
 	pr := pixel & 0xFF
@@ -169,7 +169,7 @@ Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证�
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
 	dragToY := GetY(toY)
-	SetMouseDelay -1
+	SetMouseDelay 0
 	Click %dragFromX%, %dragFromY%, D
 	dx := Abs(dragToX - dragFromX)
 	dy := Abs(dragToY - dragFromY)
