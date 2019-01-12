@@ -364,6 +364,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		return false
 	ToolTip
 	RandomClick(carX - 220, carY - 150, , DELAY_LONG)
+	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED)
 	if !CheckOperateMode()
 		RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELAY_LONG, 3)
 	RandomClick(NEXT_X, NEXT_Y, , DELAY_SUPER_LONG)
