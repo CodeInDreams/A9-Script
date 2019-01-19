@@ -19,6 +19,7 @@ This project is licensed under the terms of the GPL license. See full license in
 #### 使用方法：
 1. 配置环境、更改脚本设置（Config.ahk）
 1. 双击运行模拟器和脚本（A9 Script.ahk）
+1. （可选，增加稳定性）首次成功运行后，可以自行选中source/A9-Script，右键-Compile Script，这时将生成可独立运行的exe单文件，不再依赖AHK程序。由于配置也被编译，所以更改配置文件或更换模拟器后需要重新Compile Script才生效。
 #### 详细步骤：
 1. 安装最新版的AutoHotKey，官网下载地址：https://www.autohotkey.com/download/ahk-install.exe
 1. 安装模拟器，同时自行安装好科学上网软件
@@ -26,7 +27,6 @@ This project is licensed under the terms of the GPL license. See full license in
 1. 根据需要自行修改Config.ahk中的配置（每个配置都有详细的解释）
 1. 启动模拟器，启动完成后双击脚本运行即可
 #### 注意事项：
-1. Ctrl+F8 暂停/恢复、Ctrl+F9 重置、Ctrl+F10 关闭A9并退出
 1. 如果模拟器是以管理员身份运行，那么本脚本也需要以管理员身份运行
 1. 尽量保持模拟器默认布局，不要显示侧栏，不要超出屏幕，也不要有其他窗口置顶遮挡，以免影响点击和坐标计算
 1. MuMu模拟器需要一键安装Google环境和Play游戏
