@@ -166,7 +166,7 @@ WaitSaleAd() ; 消除促销广告弹窗
 	Sleep DELAY_MIDDLE
 	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 	{
-		IfGreater A_Index, 10, Reload
+		IfGreater A_Index, 10, Restart()
 		RandomClick(SALE_AD_X, SALE_AD_Y, , DELAY_MIDDLE)
 	}
 }
@@ -178,7 +178,7 @@ OpenApp() ; 启动A9
 	Loop
 	{
 		if A_Index > 120
-			Reload
+			Restart()
 		if CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y,GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 		{
 			Sleep DELAY_LONG
@@ -191,13 +191,26 @@ OpenApp() ; 启动A9
 	}
 }
 
+Restart() ; 重置
+{
+	global GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, lastRestartTime
+	ShowTrayTip("脚本重置")
+	if (lastRestartTime = "" || lastRestartTime + 60000 > A_TickCount || !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY))
+	{
+		CloseApp()
+		OpenApp()
+	}
+	lastRestartTime := A_TickCount
+	RunDailyRace()
+}
+
 GoHome() ; 回到A9首页(比赛中不可用)，
 {
 	global
 	while CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
 	{
 		IfGreater A_Index, 5, RandomClick(BACK_X, BACK_Y, , DELAY_LONG)
-		IfGreater A_Index, 10, Reload
+		IfGreater A_Index, 10, Restart()
 		RandomClick(HOME_X, HOME_Y, , DELAY_MIDDLE)
 	}
 	WaitSaleAd()
@@ -336,7 +349,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		|| !CheckPixel(CAR_HEAD_2_X, CAR_HEAD_2_Y, CAR_HEAD_2_COLOR))
 	{
 		if A_Index > 10
-			Reload
+			Restart()
 		Swipe(239, 503, 1837, 511)
 	}
 	ToolTip 正在检查第%indexOfCar%辆车
@@ -397,7 +410,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR)
 			Break
 		if (A_TickCount > raceTimeLimit)
-			Reload
+			Restart()
 	}
 	local successCount = 0
 	while (successCount < 3 && A_Index < 100)
@@ -470,9 +483,7 @@ Init() ; 脚本主逻辑
 	CalcWin()
 	;ResizeWin()
 	;WaitUser()
-	CloseApp()
-	OpenApp()
-	RunDailyRace()
+	Restart()
 }
 
 Init()
@@ -481,7 +492,7 @@ return
 ; 热键
 
 ^F8::Pause ; 暂停/恢复
-^F9::Reload ; 重置
+^F9::Restart() ; 重置
 ^F10:: ; 关闭A9并退出
 RevertControlSetting()
 CloseApp()

@@ -135,7 +135,7 @@ WaitColor(x, y, color*) ; 等待目标位置出现指定颜色的像素，检测
 	}
 	ShowTrayTip("检测不到特征值，脚本即将重置", DELAY_LONG)
 	Sleep DELAY_LONG
-	Reload
+	Restart()
 	Sleep DELAY_VERY_LONG
 	ShowTrayTip("重置失败，脚本即将退出", DELAY_LONG)
 	Sleep DELAY_LONG
