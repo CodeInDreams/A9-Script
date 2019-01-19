@@ -92,7 +92,7 @@ GetPixel(x, y) ; 获取像素
 
 CheckPixel(x, y, colors*) ; 验证像素颜色
 {
-	deviation := 10 ; 由于模拟器渲染问题，这里允许少量误差
+	static colorDeviation := 10 ; 由于模拟器渲染问题，这里允许少量误差
 	pixel := GetPixel(x, y)
 	pr := pixel & 0xFF
 	pg := (pixel & 0xFF00) >> 8
@@ -102,7 +102,7 @@ CheckPixel(x, y, colors*) ; 验证像素颜色
 		cr := color & 0xFF
 		cg := (color & 0xFF00) >> 8
 		cb := color >> 16
-		if (Abs(pr - cr + pg - cg + pb - cb) < deviation)
+		if (Abs(pr - cr + pg - cg + pb - cb) < colorDeviation)
 			return true
 	}
 	return false
@@ -161,7 +161,7 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 	IfGreater timeAppend, 0, Sleep timeAppend
 }
 
-Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证精确，1：精确但不够快
+Swipe(fromX, fromY, toX, toY) ; 滑动
 {
 	CalcWin()
 	global AH, VH, DELAY_VERY_SHORT
@@ -183,7 +183,7 @@ Swipe(fromX, fromY, toX, toY, mode:=0) ; 滑动，mode，0：快速但不保证�
 	Loop %part%
 	{
 		MouseMove dxPart, dyPart, , R
-		if (A_Index & 0xF = 0 && mode = 1) ; 减少二进制位1的个数，来提高精度，但会增加延迟
+		if (A_Index & 0xF = 0) ; 减少二进制位1的个数，来提高精度，但会增加延迟
 			Sleep 1
 	}
 	MouseMove dragToX, dragToY
