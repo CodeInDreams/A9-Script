@@ -3,6 +3,7 @@
 	本项目遵守GPL开源协议，协议内容请见LICENSE.TXT。
 */
 
+#NoTrayIcon
 SetWorkingDir %A_ScriptDir%
 
 A9_FILE_NAME = source`\A9.ahk

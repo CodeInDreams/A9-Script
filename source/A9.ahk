@@ -8,7 +8,6 @@
 #Persistent
 SetBatchLines -1
 Process Priority, , High
-;SendMode Input
 SetWorkingDir %A_ScriptDir%
 ;Icon source\icon.ico
 CoordMode Pixel, Client
@@ -218,7 +217,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 		tickets := 10
 	if (tickets > TICKET_LIMIT) ; 当前票大于预留值(也就是还有票可用)
 	{
-		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, , DELAY_MIDDLE) ; 这里为了让图标缩小到同样大小，便于匹配特征点。如果被点击的赛事是要找的目标(有时会出现乱序现象)，那就匹配不到，直接下次再说
+		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, DELAY_SHORT, DELAY_MIDDLE) ; 这里为了让图标缩小到同样大小，便于匹配特征点。如果被点击的赛事是要找的目标(有时会出现乱序现象)，那就匹配不到，直接下次再说
 		Loop 2 ; 有时候刚进游戏加载不出来，所以搜索两次
 		{
 			local findDailyCar := false
@@ -313,7 +312,9 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 			RunDailyRace()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
-		while (!StartRace(CAREER_CARS[A_Index], 30, 90))
+		local startIndex := 1
+		Random startIndex, 0, 2
+		while (A_Index >= startIndex && !StartRace(CAREER_CARS[A_Index], 30, 90))
 		{
 			if (A_Index >= carArraySize)
 			{
@@ -343,7 +344,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 	local relativePos := indexOfCar
 	while relativePos > 6
 	{
-		Swipe(1837, 520, 239, 521, 1)
+		Swipe(1837, 520, 239, 521)
 		relativePos -= 6
 		if (releativePos > 6 && CheckPixel(CAR_TAIL_X, CAR_TAIL_Y, CAR_TAIL_COLOR))
 			return false
@@ -367,7 +368,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED)
 	if !CheckOperateMode()
 		RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELAY_LONG, 3)
-	RandomClick(NEXT_X, NEXT_Y, , DELAY_SUPER_LONG)
+	RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_SUPER_LONG)
 	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
 	{
 		if (A_Index > waitStartTime)
