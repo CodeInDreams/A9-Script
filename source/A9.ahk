@@ -195,7 +195,9 @@ Restart() ; 重置
 {
 	global GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, lastRestartTime
 	ShowTrayTip("脚本重置")
-	if (lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount || !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY))
+	; 60秒内重置过，或者没返回、运行两处均检测不到特征值
+	if (lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount || !(CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
+			|| CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)))
 	{
 		CloseApp()
 		OpenApp()
@@ -266,7 +268,9 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 				WaitSaleAd()
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
-				while (!StartRace(DAILY_CARS[A_Index], 30, 50))
+				local startIndex
+				Random startIndex, 0, 2
+				while (A_Index > startIndex || !StartRace(DAILY_CARS[A_Index], 30, 50))
 				{
 					if (A_Index >= carArraySize)
 					{
@@ -325,9 +329,7 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 			RunDailyRace()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
-		local startIndex := 1
-		Random startIndex, 0, 2
-		while (A_Index >= startIndex && !StartRace(CAREER_CARS[A_Index], 30, 90))
+		while (!StartRace(CAREER_CARS[A_Index], 30, 90))
 		{
 			if (A_Index >= carArraySize)
 			{
