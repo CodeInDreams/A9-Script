@@ -18,8 +18,9 @@ APP_OPEN_Y = 217 ; A9图标Y坐标
 
 CloseApp() ; 关闭A9
 {
-	global EMU_AHK_CLASS, APP_CLOSE_X, APP_CLOSE_Y
+	global EMU_AHK_CLASS, APP_CLOSE_X, APP_CLOSE_Y, DELAY_VERY_SHORT
 	WinActivate ahk_class %EMU_AHK_CLASS%
+	Sleep DELAY_VERY_SHORT
 	Click %APP_CLOSE_X%, %APP_CLOSE_Y%
 }
 

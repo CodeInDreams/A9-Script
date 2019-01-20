@@ -92,7 +92,7 @@ GetPixel(x, y) ; 获取像素
 
 CheckPixel(x, y, colors*) ; 验证像素颜色
 {
-	static colorDeviation := 10 ; 由于模拟器渲染问题，这里允许少量误差
+	static colorDeviation := 50 ; 由于模拟器渲染问题，这里允许少量误差
 	pixel := GetPixel(x, y)
 	pr := pixel & 0xFF
 	pg := (pixel & 0xFF00) >> 8
