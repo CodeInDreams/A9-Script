@@ -68,6 +68,9 @@ GAME_RUNNING_CHECK_Y = 53
 GAME_RUNNING_CHECK_COLOR_DARK = 0x191919
 GAME_RUNNING_CHECK_COLOR_GRAY = 0x343434
 GAME_RUNNING_CHECK_COLOR_NORMAL = 0xFFFFFF
+GAME_RUNNING_CHECK_X_2 = 822
+GAME_RUNNING_CHECK_Y_2 = 53
+GAME_RUNNING_CHECK_COLOR_2 = 0x040404
 ; 比赛中检测
 RACING_CHECK_X = 158
 RACING_CHECK_Y = 104
@@ -194,15 +197,15 @@ OpenApp() ; 启动A9
 Restart() ; 重置
 {
 	global GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, lastRestartTime
-	ShowTrayTip("脚本重置")
-	; 60秒内重置过，或者没返回、运行两处均检测不到特征值
-	if (lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount || !(CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
-			|| CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)))
+	; 60秒内重置过，或者检测不到菜单页特征值
+	if (lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount
+		|| !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+		|| !CheckPixelWithDeviation(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2, 50))
 	{
 		CloseApp()
 		OpenApp()
 	}
-	lastRestartTime := A_TickCount
+	pppp := A_TickCount
 	RunDailyRace()
 }
 
@@ -493,15 +496,11 @@ return
 
 ; 热键
 
-^F8::Pause ; 暂停/恢复
-^F9::Restart() ; 重置
-^F10:: ; 关闭A9并退出
+^F9::Pause ; 暂停/恢复
+^+F9::Restart() ; 重置
+^F12:: ; 关闭A9并退出
 RevertControlSetting()
 CloseApp()
 ExitApp
 return
-^F11:: ; 仅退出
-RevertControlSetting()
-ExitApp
-return
-^F12::ExitApp ; 强制退出
+^+F12::ExitApp ; 强制退出
