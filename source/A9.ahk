@@ -9,7 +9,7 @@
 SetBatchLines -1
 Process Priority, , High
 SetWorkingDir %A_ScriptDir%
-;Icon source\icon.ico
+Menu Tray, Icon, logo.ico, , 1
 CoordMode Pixel, Client
 CoordMode Mouse, Client
 
