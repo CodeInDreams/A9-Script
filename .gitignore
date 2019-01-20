@@ -39,3 +39,6 @@
 
 # IDEA
 /.idea/
+
+# Desktop.ini
+*/desktop.ini
