@@ -1,4 +1,4 @@
-﻿# A9 Script <img src="https://raw.githubusercontent.com/CodeInDreams/A9-Script/master/source/logo_b.ico" width="32" hegiht="32"/>
+﻿# A9 Script <img src="https://raw.githubusercontent.com/CodeInDreams/A9-Script/master/source/logo_b.ico" width="40" hegiht="40" div align ="left"/>
 
 ##### 基于AHK的A9脚本
 
