@@ -1,4 +1,5 @@
-﻿# A9 Script
+﻿# A9 Script <img src="https://raw.githubusercontent.com/CodeInDreams/A9-Script/master/source/logo_b.ico" width="32" hegiht="32"/>
+
 ##### 基于AHK的A9脚本
 
 名称：A9 Script  
