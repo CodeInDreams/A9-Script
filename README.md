@@ -1,4 +1,4 @@
-# A9 Script
+﻿# A9 Script
 ##### 基于AHK的A9脚本
 
 名称：A9 Script  
@@ -36,8 +36,7 @@ This project is licensed under the terms of the GPL license. See full license in
 #### 快捷键：
 | 快捷键 | 功能 |
 | :--- | :--- |
-| Ctrl+F8 | 暂停/恢复 |
-| Ctrl+F9 | 重置 |
-| Ctrl+F10 | 关闭A9并退出 |
-| Ctrl+F11 | 仅退出 |
-| Ctrl+F12 | 强制退出 |
+| Ctrl+F9 | 暂停/恢复 |
+| Ctrl+Shift+F9 | 重置 |
+| Ctrl+F12 | 关闭A9并退出 |
+| Ctrl+Shift+F12 | 强制退出 |
