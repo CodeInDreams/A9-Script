@@ -129,7 +129,7 @@ OPERATE_MODE_X = 2003
 OPERATE_MODE_Y = 840
 OPERATE_MODE_RANGE = 12
 ; 每日车辆用车顺序
-DAILY_CARS := [1, 5, 2, 3, 4, 6]
+DAILY_CARS := [1, 5, 14, 26, 2, 3, 4]
 
 ; A9专用函数
 
@@ -275,10 +275,11 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 				WaitSaleAd()
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
-				static startIndex := 1
-				while (startIndex > A_Index || !StartRace(DAILY_CARS[A_Index], 30, 50))
+				local startIndex
+				Random startIndex, 0, carArraySize
+				while (A_Index < startIndex || !StartRace(DAILY_CARS[A_Index], 30, 50))
 				{
-					if (A_Index >= carArraySize + startIndex)
+					if (A_Index >= startIndex + carArraySize)
 					{
 						ShowTrayTip("无可用车辆")
 						RunCareerRace()
