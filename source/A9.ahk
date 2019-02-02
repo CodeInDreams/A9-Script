@@ -56,7 +56,7 @@ NITRO_Y = 559
 BRAKE_X = 345
 BRAKE_Y = 480
 ; 欧洲赛事
-EURO_CHAPTER_X = 1740
+EURO_CHAPTER_X = 1742
 EURO_CHAPTER_Y = 1025
 EURO_SEASON_X = 908
 EURO_SEASON_Y = 277
@@ -107,9 +107,11 @@ CAR_FEATURE_2_Y = 432
 CAR_FEATURE_COLOR_NORMAL = 0xFFFFFF
 CAR_FEATURE_COLOR_LOCKED = 0x7F7F7F
 ; 票，用于判断票券是否已满
-TICKET_X = 1812
-TICKET_Y = 205
-TICKET_COLOR = 0x5400FF
+TICKET_FROM_X = 1888
+TICKET_TO_X = 1906
+TICKET_Y = 192
+TICKET_COLOR_BG = 0x000000
+TICKET_COLOR = 0x12FBC3
 ; 每日车辆战利品搜索相关
 DAILY_CAR_FEATURE_1_X = 221
 DAILY_CAR_FEATURE_1_Y = 888
@@ -212,7 +214,7 @@ Restart() ; 重置
 		CloseApp()
 		OpenApp()
 	}
-	;lastRestartTime := A_TickCount
+	lastRestartTime := A_TickCount
 	RunDailyRace()
 }
 
@@ -238,8 +240,19 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	static tickets = 0
-	if (!CheckPixel(TICKET_X, TICKET_Y, TICKET_COLOR))
-		tickets := 10
+	local ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
+	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
+	{
+		if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR)
+			ticketFlag |= 2
+		else if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR_BG)
+		{
+			if (ticketFlag & 3 = 3)
+				tickets := 10
+			else
+				ticketFlag |= 1
+		}
+	}
 	if (tickets > TICKET_LIMIT) ; 当前票大于预留值(也就是还有票可用)
 	{
 		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, DELAY_SHORT, DELAY_MIDDLE) ; 这里为了让图标缩小到同样大小，便于匹配特征点。如果被点击的赛事是要找的目标(有时会出现乱序现象)，那就匹配不到，直接下次再说
