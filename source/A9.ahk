@@ -215,7 +215,16 @@ Restart() ; 重置
 		OpenApp()
 	}
 	lastRestartTime := A_TickCount
-	RunDailyRace()
+	RunRaces()
+}
+
+RunRaces() ; 开始比赛
+{
+	Loop
+	{
+		RunDailyRace()
+		RunCareerRace()
+	}
 }
 
 GoHome() ; 回到A9首页(比赛中不可用)，
@@ -234,12 +243,21 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 {
 	global
 	GoHome()
+	static tickets = 0
+	local ticketTimeChange := A_TickCount - ticketTime
+	if (ticketTimeChange > 600) ; 票数增加时，
+	{
+		local ticketChange := ticketTimeChange // 600
+		tickets += ticketChange
+		ticketTime += ticketChange * 600
+	}
+	static ticketTime := A_TickCount ; 记录票自然恢复，以跟踪当前票数
+	
 	lastDailyRaceTime := A_TickCount
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
 		RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
-	static tickets = 0
 	local ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
 	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
 	{
@@ -298,13 +316,12 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 					if (A_Index >= startIndex + carArraySize)
 					{
 						ShowTrayTip("无可用车辆")
-						RunCareerRace()
+						return
 					}
 				}
 			}
 		}
 	}
-	RunCareerRace()
 }
 
 RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，当连续跑生涯超过10min时，检查一次每日赛事
@@ -349,7 +366,7 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 			Swipe(1424, 200, 1415, 950)
 		}
 		if (!foundEuroRace)
-			RunDailyRace()
+			return
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
 		while (!StartRace(CAREER_CARS[A_Index], 30, 90))
@@ -357,13 +374,12 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 			if (A_Index >= carArraySize)
 			{
 				ShowTrayTip("无可用车辆")
-				RunDailyRace()
+				return
 			}
 		}
 		ShowTrayTip("+2400")
 	}
 	Sleep DELAY_MIDDLE
-	RunDailyRace()
 }
 
 StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
@@ -524,3 +540,5 @@ CloseApp()
 ExitApp
 return
 ^+F12::ExitApp ; 强制退出
+^+=::ticket++
+^+-::ticket--
