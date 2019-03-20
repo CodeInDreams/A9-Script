@@ -11,5 +11,11 @@ APP_INDEX = 1
 TICKET_LIMIT = 8
 ; 生涯用车顺序，第一排1、3、5、7，第二排2、4、6、8，建议前6以加快选车过程
 CAREER_CARS := [5, 6, 4, 7, 10, 12, 13]
-; 脚本在哪些小时运行，范围0~23
-RUN_HOURS := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+; 脚本在哪些时间范围运行，多个时间段用英文逗号分隔，如 0:00-8:00, 9:00-12:15, 13:55-18:30
+RUN_TIME_SCOPE = 0:00-23:59
+; true/false，默认开启/关闭每日赛事
+ENABLE_DAILY_RACE := true
+; true/false，默认开启/关闭多人赛事
+ENABLE_MULTI_PLAYER_RACE := true
+; true/false，默认开启/关闭生涯赛事
+ENABLE_CAREER_RACE := false

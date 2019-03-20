@@ -135,14 +135,29 @@ OPERATE_MODE_RANGE = 12
 ; 每日车辆用车顺序
 DAILY_CARS := [1, 5, 14, 26, 2, 3, 4]
 
+; 全局变量
+
+tickets := 0 ; 记录当前票数(开始时视为0票，通过满票识别来修正此误差)
+ticketTime := A_TickCount ; 票数计时器，表示当前票数是在何时记录的
+
 ; A9专用函数
 
-CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到时间范围内时启动A9
+CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到时间范围内时启动A9
 {
-	global RUN_HOURS, DELAY_SUPER_LONG
-	current := A_Hour
-	For k, hour in RUN_HOURS
-		if (hour - current = 0)
+	global RUN_TIME_SCOPE, DELAY_SUPER_LONG, runTimeScope
+	if (runTimeScope == "") ; 懒加载运行时段配置
+	{
+		runTimeScope := Array()
+		timeScopes := StrSplit(RUN_TIME_SCOPE, `,, A_Space)
+		for k, scope in timeScopes
+		{
+			beginAndEnd = StrSplit(scope, "-", )
+			runTimeScope.Insert(beginAndEnd)
+		}
+	}
+	current := A_Hour . ":" . A_Min
+	For k, scope in runTimeScope
+		if (current > scope[0] && current < scope[1])
 			return
 	ShowTrayTip("当前时段不运行游戏")
 	RevertControlSetting()
@@ -154,18 +169,6 @@ CheckTime() ; 用于限制脚本运行时间，时间范围外退出A9，回到�
 		For k, hour in RUN_HOURS
 			if (hour - current = 0)
 				Reload
-	}
-}
-
-WaitUser() ; 显示开始运行的提示
-{
-	global DELAY_SHORT
-	ShowTrayTip("3秒内自动开始运行")
-	countdown := 3000 // DELAY_SHORT
-	while countdown > 0
-	{
-		Sleep DELAY_SHORT
-		countdown -= 1
 	}
 }
 
@@ -189,7 +192,7 @@ OpenApp() ; 启动A9
 	{
 		if A_Index > 120
 			Restart()
-		if CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y,GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+		if CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 		{
 			Sleep DELAY_LONG
 			Break
@@ -220,10 +223,15 @@ Restart() ; 重置
 
 RunRaces() ; 开始比赛
 {
+	global ENABLE_DAILY_RACE, ENABLE_CAREER_RACE, enableMultiPlayerRace
 	Loop
 	{
-		RunDailyRace()
-		RunCareerRace()
+		if (ENABLE_DAILY_RACE)
+			RunDailyRace()
+		if (enableMultiPlayerRace)
+			RunMultiPlayerRace()
+		if (ENABLE_CAREER_RACE)
+			RunCareerRace()
 	}
 }
 
@@ -239,38 +247,55 @@ GoHome() ; 回到A9首页(比赛中不可用)，
 	WaitSaleAd()
 }
 
-RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛；在票消耗到预留值时，开始跑生涯
+UpdateTicket() ; 更新票数，返回值表示票数是否变化
+{
+	global tickets, ticketTime
+	ticketChange := (A_TickCount - ticketTime) // 600000
+	if (ticketChange > 0) ; 票数变化时，更新票和计时器
+	{
+		tickets += ticketChange
+		if (tickets > 10)
+			tickets := 10
+		else if (tickets < 0)
+			tickets := 0
+		ticketTime += ticketChange * 600000
+		return true
+	}
+	return false
+}
+
+CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别，如果票满，会刷新票数和票数计时器
+{
+	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime
+	ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
+	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
+	{
+		if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR) ; 检测到1数字颜色
+			ticketFlag |= 2
+		else if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR_BG) ; 检测到1背景色
+		{
+			if (ticketFlag & 3 = 3) ; 检测到背景色是来自右边
+			{
+				tickets := 10
+				ticketTime := A_TickCount
+			}
+			else ; 检测到背景色是来自左边
+				ticketFlag |= 1
+		}
+	}
+}
+
+RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛
 {
 	global
 	GoHome()
-	static tickets = 0
-	local ticketTimeChange := A_TickCount - ticketTime
-	if (ticketTimeChange > 600) ; 票数增加时，
-	{
-		local ticketChange := ticketTimeChange // 600
-		tickets += ticketChange
-		ticketTime += ticketChange * 600
-	}
-	static ticketTime := A_TickCount ; 记录票自然恢复，以跟踪当前票数
-	
-	lastDailyRaceTime := A_TickCount
+	CheckTime()
+	UpdateTicket()
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
 		RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
-	local ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
-	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
-	{
-		if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR)
-			ticketFlag |= 2
-		else if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR_BG)
-		{
-			if (ticketFlag & 3 = 3)
-				tickets := 10
-			else
-				ticketFlag |= 1
-		}
-	}
+	CheckFullTicket()
 	if (tickets > TICKET_LIMIT) ; 当前票大于预留值(也就是还有票可用)
 	{
 		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, DELAY_SHORT, DELAY_MIDDLE) ; 这里为了让图标缩小到同样大小，便于匹配特征点。如果被点击的赛事是要找的目标(有时会出现乱序现象)，那就匹配不到，直接下次再说
@@ -302,10 +327,11 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 		{
 			RandomClick(dailyRaceX, dailyRaceY, , DELAY_MIDDLE)
 			RandomClick(dailyRaceX, dailyRaceY, , DELAY_MIDDLE)
-			while (tickets > TICKET_LIMIT)
+			while (tickets > TICKET_LIMIT && ENABLE_DAILY_RACE)
 			{
+				CheckTime()
+				UpdateTicket()
 				tickets -= 1
-				lastDailyRaceTime := A_TickCount
 				WaitSaleAd()
 				WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 				RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
@@ -324,10 +350,20 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 	}
 }
 
-RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，当连续跑生涯超过10min时，检查一次每日赛事
+RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 {
 	global
 	GoHome()
+	CheckTime()
+	ShowTrayTip("多人赛敬请期待")
+	return
+}
+
+RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
+{
+	global
+	GoHome()
+	CheckTime()
 	if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)
 		RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELAY_MIDDLE)
 	RandomClick(CAREER_RACE_X, CAREER_RACE_Y, , DELAY_MIDDLE)
@@ -335,8 +371,9 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 	RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELAY_SHORT, DELAY_SHORT, 2)
 	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELAY_MIDDLE, 2)
 	local carArraySize := CAREER_CARS.MaxIndex()
-	while (lastDailyRaceTime + 600000 > A_TickCount)
+	while (!UpdateTicket() && ENABLE_CAREER_RACE) ; 票无变化 且 启用生涯赛事
 	{
+		CheckTime()
 		WaitSaleAd()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
 		Loop 6
@@ -385,7 +422,6 @@ RunCareerRace() ; 从首页打开并开始生涯EURO赛季的第12个赛事，�
 StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
 {
 	global
-	CheckTime()
 	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; 重置车辆位置，如果滑动次数超过10次，那么说明不正常，就要重置脚本
 		|| !CheckPixel(CAR_HEAD_2_X, CAR_HEAD_2_Y, CAR_HEAD_2_COLOR))
 	{
@@ -523,8 +559,12 @@ Init() ; 脚本主逻辑
 	WaitWin()
 	CalcWin()
 	;ResizeWin()
-	;WaitUser()
 	Restart()
+}
+
+ShowRaceSwitchStatus() ; 气泡显示赛事开启/关闭状态
+{
+	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关") . "`n多人：" . (enableMultiPlayerRace ? "开" : "关") . "`n生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"))
 }
 
 Init()
@@ -533,12 +573,53 @@ return
 ; 热键
 
 ^F9::Pause ; 暂停/恢复
+
 ^+F9::Restart() ; 重置
+
 ^F12:: ; 关闭A9并退出
 RevertControlSetting()
 CloseApp()
 ExitApp
 return
+
 ^+F12::ExitApp ; 强制退出
-^+=::ticket++
-^+-::ticket--
+
+^+=:: ; 初始票+1
+tickets++
+ShowToolTip("当前票数为" . tickets)
+return
+
+^+-:: ; 初始票-1
+tickets--
+ShowToolTip("当前票数为" . tickets)
+return
+
+^F1:: ; 开启每日赛事
+ENABLE_DAILY_RACE := true
+ShowRaceSwitchStatus()
+return
+
+^+F1:: ; 关闭每日赛事
+ENABLE_DAILY_RACE := false
+ShowRaceSwitchStatus()
+return
+
+^F2:: ; 开启多人赛事
+enableMultiPlayerRace := true
+ShowRaceSwitchStatus()
+return
+
+^+F2:: ; 关闭多人赛事
+enableMultiPlayerRace := false
+ShowRaceSwitchStatus()
+return
+
+^F3:: ; 开启生涯赛事
+ENABLE_CAREER_RACE := true
+ShowRaceSwitchStatus()
+return
+
+^+F3:: ; 关闭生涯赛事
+ENABLE_CAREER_RACE := false
+ShowRaceSwitchStatus()
+return

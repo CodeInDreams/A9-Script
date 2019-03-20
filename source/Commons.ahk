@@ -203,3 +203,14 @@ HideTrayTip() ; 隐藏托盘区提示
 {
 	TrayTip
 }
+
+ShowToolTip(text, period:=1000) ; 显示period毫秒的气泡提示
+{
+	Tooltip %text%
+	SetTimer HideToolTip, -%period%
+}
+
+HideToolTip() ; 隐藏气泡提示
+{
+	ToolTip
+}
