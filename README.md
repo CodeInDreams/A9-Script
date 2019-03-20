@@ -20,7 +20,7 @@ This project is licensed under the terms of the GPL license. See full license in
 #### 使用方法：
 1. 配置环境、更改脚本设置（Config.ahk）
 1. 双击运行模拟器和脚本（A9 Script.ahk）
-1. （可选，增加稳定性）首次成功运行后，可以自行选中source/A9-Script，右键-Compile Script，这时将生成可独立运行的exe单文件，不再依赖AHK程序。由于配置也被编译，所以更改配置文件或更换模拟器后需要重新Compile Script才生效。
+1. 【可选，增加稳定性】首次成功运行后，可以自行选中source/A9-Script，右键-Compile Script，这时将生成可独立运行的exe单文件，不再依赖AHK程序。由于配置也被编译，所以更改配置文件或更换模拟器后需要重新Compile Script才生效。【图标】如果运行Ahk2Exe.exe来在图形界面生成exe的话，可以选择图标、压缩与否，启用压缩可能会被杀软误报。编译的脚本默认都会使用上次编译时的图标，所以Ahk2Exe.exe设置一次，后面直接右键Compile Script也是有图标的。
 #### 详细步骤：
 1. 安装最新版的AutoHotKey，官网下载地址：https://www.autohotkey.com/download/ahk-install.exe
 1. 安装模拟器，同时自行安装好科学上网软件
@@ -38,6 +38,12 @@ This project is licensed under the terms of the GPL license. See full license in
 #### 快捷键：
 | 快捷键 | 功能 |
 | :--- | :--- |
+| Ctrl+F1 | 启用每日赛事 |
+| Ctrl+Shift+F1 | 关闭每日赛事 |
+| Ctrl+F2 | 启用多人赛事 |
+| Ctrl+Shift+F2 | 关闭多人赛事 |
+| Ctrl+F3 | 启用生涯赛事 |
+| Ctrl+Shift+F3 | 关闭生涯赛事 |
 | Ctrl+F9 | 暂停/恢复 |
 | Ctrl+Shift+F9 | 重置 |
 | Ctrl+F12 | 关闭A9并退出 |
