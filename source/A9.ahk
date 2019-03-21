@@ -223,12 +223,12 @@ Restart() ; 重置
 
 RunRaces() ; 开始比赛
 {
-	global ENABLE_DAILY_RACE, ENABLE_CAREER_RACE, enableMultiPlayerRace
+	global ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE
 	Loop
 	{
 		if (ENABLE_DAILY_RACE)
 			RunDailyRace()
-		if (enableMultiPlayerRace)
+		if (ENABLE_MULTI_PLAYER_RACE)
 			RunMultiPlayerRace()
 		if (ENABLE_CAREER_RACE)
 			RunCareerRace()
@@ -564,7 +564,7 @@ Init() ; 脚本主逻辑
 
 ShowRaceSwitchStatus() ; 气泡显示赛事开启/关闭状态
 {
-	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关") . "`n多人：" . (enableMultiPlayerRace ? "开" : "关") . "`n生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"))
+	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关") . "`n多人：" . (ENABLE_MULTI_PLAYER_RACE ? "开" : "关") . "`n生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"))
 }
 
 Init()
@@ -605,12 +605,12 @@ ShowRaceSwitchStatus()
 return
 
 ^F2:: ; 开启多人赛事
-enableMultiPlayerRace := true
+ENABLE_MULTI_PLAYER_RACE := true
 ShowRaceSwitchStatus()
 return
 
 ^+F2:: ; 关闭多人赛事
-enableMultiPlayerRace := false
+ENABLE_MULTI_PLAYER_RACE := false
 ShowRaceSwitchStatus()
 return
 
