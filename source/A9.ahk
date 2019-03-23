@@ -143,13 +143,14 @@ DAILY_CARS := [1, 5, 14, 26, 2, 3, 4]
 
 tickets := 0 ; 记录当前票数(开始时视为0票，通过满票识别来修正此误差)
 ticketTime := A_TickCount ; 票数计时器，表示当前票数是在何时记录的
+needFullTicketCheck := true ; 是否需要满票检测来消除tickets初始值的误差，每个运行时间段只需要纠正一次
 enableDebug := false ; 是否启用调试
 
 ; A9专用函数
 
 CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到时间范围内时启动A9
 {
-	global RUN_TIME_SCOPE, DELAY_SUPER_LONG, runTimeScope
+	global RUN_TIME_SCOPE, DELAY_SUPER_LONG, runTimeScope, needFullTicketCheck
 	if (runTimeScope == "") ; 懒加载运行时段配置
 	{
 		runTimeScope := []
@@ -160,11 +161,12 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 			runTimeScope.Insert([beginAndEnd1, beginAndEnd2])
 		}
 	}
-	current := (A_Hour < 10 ? "0" . A_Hour : A_Hour) . ":" . (A_Min < 10 ? "0" . A_Min : A_Min)
+	current := A_Hour . ":" . A_Min
 	For k, scope in runTimeScope
 		if (current > scope[1] && current < scope[2])
 			return
 	ShowTrayTip("当前时段不运行游戏")
+	needFullTicketCheck := true
 	RevertControlSetting()
 	CloseApp()
 	Loop
@@ -178,12 +180,12 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 
 WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖励，每次跑完概率弹出
 {
-	global DELAY_MIDDLE, DELAY_LONG, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, SALE_AD_X, SALE_AD_Y, NICK_CLOSE_X, NICK_CLOSE_Y, 
+	global DELAY_MIDDLE, DELAY_LONG, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, SALE_AD_X, SALE_AD_Y, NICK_CLOSE_X, NICK_CLOSE_Y, REQUEST_X, REQUEST_Y, REQUEST_COLOR
 	Sleep DELAY_MIDDLE
 	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 	{
-		if (A_Index <= 3)
-			RandomClick(SALE_AD_X, SALE_AD_Y, , DELAY_LONG) ; 第1~3次尝试关闭促销广告
+		if (A_Index <= 3) ; 第1~3次尝试关闭促销广告
+			RandomClick(SALE_AD_X, SALE_AD_Y, , DELAYG)
 		if (A_Index > 3 && A_Index <= 6 && CheckPixel(REQUEST_X, REQUEST_Y, REQUEST_COLOR)) ; 第4~6次尝试关闭关闭入队申请
 			RandomClick(REQUEST_X, REQUEST_Y, , DELAY_LONG)
 		if (A_Index > 6 && A_Index <= 9) ; 第7~9次尝试关闭误触导致的改昵称弹窗
@@ -276,9 +278,11 @@ UpdateTicket() ; 更新票数，返回值表示票数是否变化
 	return false
 }
 
-CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别，如果票满，会刷新票数和票数计时器
+CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别；如果票满，会刷新票数和票数计时器；在每个时间段，只检测到一次满票即可，后续全程由票数计时器计算
 {
-	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime
+	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime, needFullTicketCheck
+	if (!needFullTicketCheck)
+		return
 	ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
 	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
 	{
@@ -294,6 +298,7 @@ CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别，�
 				Debug("第" . A_Index . "次：右背景 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y))
 				tickets := 10
 				ticketTime := A_TickCount
+				needFullTicketCheck := false
 			}
 			else ; 检测到背景色是来自左边
 			{
