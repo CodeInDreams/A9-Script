@@ -185,7 +185,7 @@ WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖
 	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 	{
 		if (A_Index <= 3) ; 第1~3次尝试关闭促销广告
-			RandomClick(SALE_AD_X, SALE_AD_Y, , DELAYG)
+			RandomClick(SALE_AD_X, SALE_AD_Y, , DELAY_LONG)
 		if (A_Index > 3 && A_Index <= 6 && CheckPixel(REQUEST_X, REQUEST_Y, REQUEST_COLOR)) ; 第4~6次尝试关闭关闭入队申请
 			RandomClick(REQUEST_X, REQUEST_Y, , DELAY_LONG)
 		if (A_Index > 6 && A_Index <= 9) ; 第7~9次尝试关闭误触导致的改昵称弹窗
