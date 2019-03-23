@@ -613,11 +613,15 @@ return
 
 ^+=:: ; 初始票+1
 tickets++
+if (tickets > 10)
+	tickets := 10
 ShowToolTip("当前票数为" . tickets)
 return
 
 ^+-:: ; 初始票-1
 tickets--
+if (tickets < 0)
+	tickets := 0
 ShowToolTip("当前票数为" . tickets)
 return
 
