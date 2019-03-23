@@ -18,4 +18,4 @@ ENABLE_DAILY_RACE := true
 ; true/false，默认开启/关闭多人赛事
 ENABLE_MULTI_PLAYER_RACE := true
 ; true/false，默认开启/关闭生涯赛事
-ENABLE_CAREER_RACE := false
+ENABLE_CAREER_RACE := true

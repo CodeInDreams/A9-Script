@@ -117,6 +117,7 @@ CheckPixelWithDeviation(x, y, color, deviation:=200) ; 验证像素颜色，允�
 	cr := color & 0xFF
 	cg := (color & 0xFF00) >> 8
 	cb := color >> 16
+	Debug("误差：" . Abs(pr - cr) + Abs(pg - cg) + Abs(pb - cb))
 	return (Abs(pr - cr) + Abs(pg - cg) + Abs(pb - cb) < deviation)
 }
 
@@ -213,4 +214,13 @@ ShowToolTip(text, period:=1000) ; 显示period毫秒的气泡提示
 HideToolTip() ; 隐藏气泡提示
 {
 	ToolTip
+}
+
+Debug(text) ; 记录日志，用于debug
+{
+	global enableDebug
+	if (enableDebug)
+	{
+		MsgBox % text
+	}
 }
