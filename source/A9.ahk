@@ -212,7 +212,7 @@ WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖
 			RandomClick(REQUEST_X, REQUEST_Y, , DELAY_LONG)
 		if (A_Index > 6 && A_Index <= 9) ; 第7~9次尝试关闭误触导致的改昵称弹窗
 			RandomClick(NICK_CLOSE_X, NICK_CLOSE_Y, , DELAY_LONG)
-		if (A_Index > 10) ; 13次直接重置
+		if (A_Index > 9) ; 10次直接重置
 			Restart()
 	}
 	if CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR) ; 关闭多人包弹窗
@@ -491,6 +491,7 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELAY_MIDDLE, 2)
 	local carArraySize := CAREER_CARS.MaxIndex()
 	while (!UpdateTicket() && ENABLE_CAREER_RACE) ; 票无变化 且 启用生涯赛事
+	{
 		CheckTime()
 		WaitPopUp()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
