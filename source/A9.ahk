@@ -23,6 +23,10 @@ NETWORK_ERROR_COLOR = 0xFFFFFF
 DAILY_RACE_X = 500
 DAILY_RACE_Y = 973
 DAILY_RACE_COLOR = 0xFFFFFF
+; 多人游戏
+MULTI_PLAYER_RACE_X = 851
+MULTI_PLAYER_RACE_Y = 973
+MULTI_PLAYER_RACE_COLOR = 0xFFFFFF
 ; 我的生涯
 CAREER_RACE_X = 1530
 CAREER_RACE_Y = 973
@@ -44,6 +48,18 @@ NEXT_COLOR_GREEN = 0x12FBC3
 NEXT_COLOR_BLACK = 0xA09692
 NEXT_COLOR_WHITE = 0xFFFFFF
 NEXT_COLOR_RED = 0x6412FB
+; 多人首页
+MP_START_X = 1520
+MP_START_Y = 976
+MP_START_COLOR = 0x12FBC3
+; 多人选车段位
+MP_LEVEL_X = 1441
+MP_LEVEL_Y = 215
+MP_LEVEL_GAP = 135
+; 多人报错
+MP_ERROR_X = 1843
+MP_ERROR_Y = 304
+MP_ERROR_COLOR = 0x5500FF
 ; 促销广告
 SALE_AD_X = 1744
 SALE_AD_Y = 186
@@ -53,6 +69,10 @@ NICK_CLOSE_Y = 80
 REQUEST_X = 763
 REQUEST_Y = 871
 REQUEST_COLOR = 0xFFFFFF
+; 入队申请
+MP_PACK_X = 1250
+MP_PACK_Y = 987
+MP_PACK_COLOR = 0x01D9FC
 ; 氮气
 NITRO_X = 1830
 NITRO_Y = 559
@@ -91,6 +111,8 @@ RACE_FINISH_COLOR = 0x4200F5
 CAR_FIRST_OIL_X = 630
 CAR_UPPER_OIL_Y = 633
 CAR_LOWER_OIL_Y = 993
+CAR_MP_X_DEVIATION = 150
+CAR_MP_Y_DEVIATION = -10
 CAR_GAP_W = 514
 CAR_RUNABLE_COLOR_MIN = 0x12260C
 CAR_RUNABLE_COLOR_MAX = 0x39FBC3
@@ -137,7 +159,7 @@ OPERATE_MODE_X = 2003
 OPERATE_MODE_Y = 840
 OPERATE_MODE_RANGE = 12
 ; 每日车辆用车顺序
-DAILY_CARS := [1, 5, 14, 26, 2, 3, 4]
+DAILY_CARS := [1, 5, 14, 2, 3, 4]
 
 ; 全局变量
 
@@ -178,9 +200,9 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 	}
 }
 
-WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖励，每次跑完概率弹出
+WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖励、多人包，每次跑完概率弹出
 {
-	global DELAY_MIDDLE, DELAY_LONG, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY, SALE_AD_X, SALE_AD_Y, NICK_CLOSE_X, NICK_CLOSE_Y, REQUEST_X, REQUEST_Y, REQUEST_COLOR
+	global
 	Sleep DELAY_MIDDLE
 	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
 	{
@@ -190,8 +212,24 @@ WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖
 			RandomClick(REQUEST_X, REQUEST_Y, , DELAY_LONG)
 		if (A_Index > 6 && A_Index <= 9) ; 第7~9次尝试关闭误触导致的改昵称弹窗
 			RandomClick(NICK_CLOSE_X, NICK_CLOSE_Y, , DELAY_LONG)
-		if (A_Index > 9) ; 10次直接重置
+		if (A_Index > 10) ; 13次直接重置
 			Restart()
+	}
+	if CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR) ; 关闭多人包弹窗
+	{
+		RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_LONG)
+		Loop 10
+		{
+			if CheckPixel(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK)
+			{
+				RandomClick(NEXT_X, NEXT_Y, DELAY_VERY_SHORT, DELAY_MIDDLE)
+				Break
+			}
+			if (A_Index = 10)
+				Restart()
+			else
+				Sleep DELAY_MIDDLE
+		}
 	}
 }
 
@@ -384,8 +422,60 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 	global
 	GoHome()
 	CheckTime()
-	ShowTrayTip("多人赛敬请期待")
-	return
+	if !CheckPixel(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, MULTI_PLAYER_RACE_COLOR)
+		RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
+	RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
+	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+	while !UpdateTicket()
+	{
+		while !CheckPixel(MP_START_X, MP_START_Y, MP_START_COLOR)
+		{
+			Sleep DELAY_SHORT
+			if (A_Index > 5)
+				return
+		}
+		RandomClick(MP_START_X, MP_START_Y, , DELAY_MIDDLE)
+		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+		local finish := false
+		local maxLevel := 3 ; 这里先固定最高使用黄金段位车辆，后面有时间再加检测
+		Loop %maxLevel%
+		{
+			local levelX := MP_LEVEL_X + MP_LEVEL_GAP * (maxLevel - A_Index)
+			RandomClick(levelX, MP_LEVEL_Y, , DELAY_MIDDLE)
+			Loop 4
+			{
+				local relativePos := A_Index
+				ToolTip 正在检查第%relativePos%辆车
+				local carX := (relativePos - 1) // 2 * CAR_GAP_W + CAR_FIRST_OIL_X + CAR_MP_X_DEVIATION
+				local carY := (relativePos & 1 = 0 ? CAR_LOWER_OIL_Y : CAR_UPPER_OIL_Y) + CAR_MP_Y_DEVIATION
+				local oilColor := GetPixel(carX, carY)
+				local oilR := oilColor & 0xFF
+				local oilG := (oilColor & 0xFF00) >> 8
+				local oilB := oilColor >> 16
+				local minR := CAR_RUNABLE_COLOR_MIN & 0xFF
+				local minG := (CAR_RUNABLE_COLOR_MIN & 0xFF00) >> 8
+				local minB := CAR_RUNABLE_COLOR_MIN >> 16
+				local maxR := CAR_RUNABLE_COLOR_MAX & 0xFF
+				local maxG := (CAR_RUNABLE_COLOR_MAX & 0xFF00) >> 8
+				local maxB := CAR_RUNABLE_COLOR_MAX >> 16
+				Debug("检测油量：" . carX . ":" . carY . " " . oilColor)
+				if (oilR < minR || oilR > maxR || oilG < minG || oilG > maxG || oilB < minB || oilB > maxB)
+					Continue
+				ToolTip
+				while (!finish)
+				{
+					if (A_Index > 10)
+						Break
+					RandomClick(levelX, MP_LEVEL_Y, , DELAY_MIDDLE)
+					RandomClick(carX - 220, carY - 150, , DELAY_LONG)
+					finish := StartRace(0, 300, 300)
+				}
+				WaitPopUp()
+			}
+			if (finish)
+				Break
+		}
+	}
 }
 
 RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
@@ -401,7 +491,6 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELAY_MIDDLE, 2)
 	local carArraySize := CAREER_CARS.MaxIndex()
 	while (!UpdateTicket() && ENABLE_CAREER_RACE) ; 票无变化 且 启用生涯赛事
-	{
 		CheckTime()
 		WaitPopUp()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
@@ -448,48 +537,56 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 	Sleep DELAY_MIDDLE
 }
 
-StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，目前仅适用于多车可选的赛事，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
+StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，不需要选车指定0即可，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
 {
 	global
-	while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; 重置车辆位置，如果滑动次数超过10次，那么说明不正常，就要重置脚本
+	if (indexOfCar > 0)
+	{
+		while (!CheckPixel(CAR_HEAD_1_X, CAR_HEAD_1_Y, CAR_HEAD_1_COLOR) ; 重置车辆位置，如果滑动次数超过10次，那么说明不正常，就要重置脚本
 		|| !CheckPixel(CAR_HEAD_2_X, CAR_HEAD_2_Y, CAR_HEAD_2_COLOR))
-	{
-		if A_Index > 10
-			Restart()
-		Swipe(239, 503, 1837, 511)
-	}
-	ToolTip 正在检查第%indexOfCar%辆车
-	Sleep DELAY_SHORT
-	local relativePos := indexOfCar
-	while relativePos > 6
-	{
-		Swipe(1837, 520, 239, 520)
-		relativePos -= 6
-		if (releativePos > 6 && CheckPixel(CAR_TAIL_X, CAR_TAIL_Y, CAR_TAIL_COLOR))
+		{
+			if A_Index > 10
+				Restart()
+			Swipe(239, 503, 1837, 511)
+		}
+		ToolTip 正在检查第%indexOfCar%辆车
+		Sleep DELAY_SHORT
+		local relativePos := indexOfCar
+		while relativePos > 6
+		{
+			Swipe(1837, 520, 239, 520)
+			relativePos -= 6
+			if (releativePos > 6 && CheckPixel(CAR_TAIL_X, CAR_TAIL_Y, CAR_TAIL_COLOR))
+				return false
+		}
+		local carX := (relativePos - 1) // 2 * CAR_GAP_W + CAR_FIRST_OIL_X
+		local carY := (relativePos & 1 = 0 ? CAR_LOWER_OIL_Y : CAR_UPPER_OIL_Y)
+		local oilColor := GetPixel(carX, carY)
+		local oilR := oilColor & 0xFF
+		local oilG := (oilColor & 0xFF00) >> 8
+		local oilB := oilColor >> 16
+		local minR := CAR_RUNABLE_COLOR_MIN & 0xFF
+		local minG := (CAR_RUNABLE_COLOR_MIN & 0xFF00) >> 8
+		local minB := CAR_RUNABLE_COLOR_MIN >> 16
+		local maxR := CAR_RUNABLE_COLOR_MAX & 0xFF
+		local maxG := (CAR_RUNABLE_COLOR_MAX & 0xFF00) >> 8
+		local maxB := CAR_RUNABLE_COLOR_MAX >> 16
+		if (oilR < minR || oilR > maxR || oilG < minG || oilG > maxG || oilB < minB || oilB > maxB)
 			return false
+		ToolTip
+		RandomClick(carX - 220, carY - 150, , DELAY_LONG)
 	}
-	local carX := (relativePos - 1) // 2 * CAR_GAP_W + CAR_FIRST_OIL_X
-	local carY := (relativePos & 1 = 0 ? CAR_LOWER_OIL_Y : CAR_UPPER_OIL_Y)
-	local oilColor := GetPixel(carX, carY)
-	local oilR := oilColor & 0xFF
-	local oilG := (oilColor & 0xFF00) >> 8
-	local oilB := oilColor >> 16
-	local minR := CAR_RUNABLE_COLOR_MIN & 0xFF
-	local minG := (CAR_RUNABLE_COLOR_MIN & 0xFF00) >> 8
-	local minB := CAR_RUNABLE_COLOR_MIN >> 16
-	local maxR := CAR_RUNABLE_COLOR_MAX & 0xFF
-	local maxG := (CAR_RUNABLE_COLOR_MAX & 0xFF00) >> 8
-	local maxB := CAR_RUNABLE_COLOR_MAX >> 16
-	if (oilR < minR || oilR > maxR || oilG < minG || oilG > maxG || oilB < minB || oilB > maxB)
-		return false
-	ToolTip
-	RandomClick(carX - 220, carY - 150, , DELAY_LONG)
 	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED)
 	if !CheckOperateMode()
 		RandomClick(OPERATE_MODE_X, OPERATE_MODE_Y, , DELAY_LONG, 3)
 	RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_SUPER_LONG)
 	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
 	{
+		if CheckPixel(MP_ERROR_X, MP_ERROR_Y, MP_ERROR_COLOR)
+		{
+			RandomClick(MP_ERROR_X, MP_ERROR_Y, , DELAY_LONG)
+			return false
+		}
 		if (A_Index > waitStartTime)
 		{
 			ShowTrayTip("无法检测比赛是否已经开始，现在按照已开始处理")
