@@ -51,7 +51,12 @@ NEXT_COLOR_RED = 0x6412FB
 ; 多人首页
 MP_START_X = 1520
 MP_START_Y = 976
-MP_START_COLOR = 0x12FBC3
+MP_START_COLOR_NORMAL = 0x12FBC3
+MP_START_COLOR_DARK = 0x2B402F
+; 多人首页误触
+MP_START_MISTAKE_X = 1761
+MP_START_MISTAKE_Y = 163
+MP_START_MISTAKE_COLOR = 0x5500FF
 ; 多人选车段位
 MP_LEVEL_X = 1441
 MP_LEVEL_Y = 215
@@ -69,9 +74,9 @@ NICK_CLOSE_Y = 80
 REQUEST_X = 763
 REQUEST_Y = 871
 REQUEST_COLOR = 0xFFFFFF
-; 入队申请
-MP_PACK_X = 1250
-MP_PACK_Y = 987
+; 多人包
+MP_PACK_X = 1233
+MP_PACK_Y = 957
 MP_PACK_COLOR = 0x01D9FC
 ; 氮气
 NITRO_X = 1830
@@ -214,22 +219,6 @@ WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖
 			RandomClick(NICK_CLOSE_X, NICK_CLOSE_Y, , DELAY_LONG)
 		if (A_Index > 9) ; 10次直接重置
 			Restart()
-	}
-	if CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR) ; 关闭多人包弹窗
-	{
-		RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_LONG)
-		Loop 10
-		{
-			if CheckPixel(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_WHITE, NEXT_COLOR_BLACK)
-			{
-				RandomClick(NEXT_X, NEXT_Y, DELAY_VERY_SHORT, DELAY_MIDDLE)
-				Break
-			}
-			if (A_Index = 10)
-				Restart()
-			else
-				Sleep DELAY_MIDDLE
-		}
 	}
 }
 
@@ -428,10 +417,19 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	while !UpdateTicket()
 	{
-		while !CheckPixel(MP_START_X, MP_START_Y, MP_START_COLOR)
+		while !CheckPixel(MP_START_X, MP_START_Y, MP_START_COLOR_NORMAL)
 		{
+			if (CheckPixel(MP_START_X, MP_START_Y, MP_START_COLOR_DARK) || CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR))
+			{
+				RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
+				RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
+				WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
+				RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
+			}
+			if (CheckPixel(MP_START_MISTAKE_X, MP_START_MISTAKE_Y, MP_START_MISTAKE_COLOR))
+				RandomClick(MP_START_MISTAKE_X, MP_START_MISTAKE_Y, , DELAY_MIDDLE)
 			Sleep DELAY_SHORT
-			if (A_Index > 5)
+			if (A_Index > 10)
 				return
 		}
 		RandomClick(MP_START_X, MP_START_Y, , DELAY_MIDDLE)
@@ -470,10 +468,14 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 					RandomClick(carX - 220, carY - 150, , DELAY_LONG)
 					finish := StartRace(0, 300, 300)
 				}
-				WaitPopUp()
+				if (finish)
+					Break
 			}
 			if (finish)
+			{
+				WaitPopUp()
 				Break
+			}
 		}
 	}
 }
