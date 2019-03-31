@@ -216,11 +216,13 @@ HideToolTip() ; 隐藏气泡提示
 	ToolTip
 }
 
-Debug(text) ; 记录日志，用于debug
+Debug(text*) ; 记录日志，用于debug
 {
 	global enableDebug
 	if (enableDebug)
 	{
-		MsgBox % text
+		for k, v in text
+			formatted .= formatted = "" ? v : ("`n" . v)
+		MsgBox %formatted%
 	}
 }

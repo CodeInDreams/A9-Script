@@ -53,6 +53,10 @@ MP_START_X = 1520
 MP_START_Y = 976
 MP_START_COLOR_NORMAL = 0x12FBC3
 MP_START_COLOR_DARK = 0x2B402F
+; 多人段位检测
+MP_LEVEL_DETECT_X = 1682
+MP_LEVEL_DETECT_Y = 530
+MP_LEVEL_COLORS := {0x6184DA: 1, 0xC09F8C: 2, 0x30C8F2: 3, 0xF86492: 4, 0xA2E1F5: 5}
 ; 多人首页误触
 MP_START_MISTAKE_X = 1761
 MP_START_MISTAKE_Y = 163
@@ -94,8 +98,8 @@ EURO_RACE_Y = 640
 EURO_RACE_Y_DEVIATION = 65
 EURO_RACE_COLOR = 0x12FBC3
 ; A9运行检测
-GAME_RUNNING_CHECK_X = 637
-GAME_RUNNING_CHECK_Y = 53
+GAME_RUNNING_CHECK_X = 686
+GAME_RUNNING_CHECK_Y = 23
 GAME_RUNNING_CHECK_COLOR_DARK = 0x191919
 GAME_RUNNING_CHECK_COLOR_GRAY = 0x343434
 GAME_RUNNING_CHECK_COLOR_NORMAL = 0xFFFFFF
@@ -117,7 +121,8 @@ CAR_FIRST_OIL_X = 630
 CAR_UPPER_OIL_Y = 633
 CAR_LOWER_OIL_Y = 993
 CAR_MP_X_DEVIATION = 150
-CAR_MP_Y_DEVIATION = -10
+CAR_MP_UPPER_Y_DEVIATION = -10
+CAR_MP_LOWER_Y_DEVIATION = -20
 CAR_GAP_W = 514
 CAR_RUNABLE_COLOR_MIN = 0x12260C
 CAR_RUNABLE_COLOR_MAX = 0x39FBC3
@@ -248,12 +253,18 @@ OpenApp() ; 启动A9
 Restart() ; 重置，不会影响票数计时器
 {
 	global BACK_X, BACK_Y, BACK_COLOR, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_CROSS_1, GAME_RUNNING_CHECK_COLOR_CROSS_2, GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2, lastRestartTime, enableDebug
-	; 60秒内重置过，或者检测不到菜单页特征值
-	if (lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount
-		|| !(CheckPixel(BACK_X, BACK_Y, BACK_COLOR) && (CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_1) || CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_2))
-			|| CheckPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2) && CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL)))
+	CheckTime()
+	forceRestart := lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount
+	hasBack := CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
+	mainCross := CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_1) || CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_2)
+	mainNormal := CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL)
+	secondNormal := CheckPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2)
+	if (forceRestart || !(hasBack && mainCross || mainNormal && secondNormal)) ; 60秒内重置过，或者检测不到菜单页特征值
 	{
-		Debug("Restarting")
+		if (enableDebug)
+		{
+			Debug("Restarting.", "forceRestart: " . forceRestart, "hasBack: " . hasBack, "mainCross: " . mainCross, "mainNormal: " . mainNormal, "secondNormal: " . secondNormal)
+		}
 		if (!enableDebug)
 			CloseApp()
 		OpenApp()
@@ -432,20 +443,24 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 			if (A_Index > 10)
 				return
 		}
+		local finish := false
+		local maxLevel = 0
+		for k, v in MP_LEVEL_COLORS ; 检测段位，青铜~传奇 分别对应 1~5
+			if CheckPixel(MP_LEVEL_DETECT_X, MP_LEVEL_DETECT_Y, k)
+				maxLevel := v
+		Debug("段位：" . maxLevel)
 		RandomClick(MP_START_X, MP_START_Y, , DELAY_MIDDLE)
 		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
-		local finish := false
-		local maxLevel := 3 ; 这里先固定最高使用黄金段位车辆，后面有时间再加检测
 		Loop %maxLevel%
 		{
 			local levelX := MP_LEVEL_X + MP_LEVEL_GAP * (maxLevel - A_Index)
 			RandomClick(levelX, MP_LEVEL_Y, , DELAY_MIDDLE)
-			Loop 4
+			Loop %MP_MAX_CARS_PER_LEVEL%
 			{
 				local relativePos := A_Index
 				ToolTip 正在检查第%relativePos%辆车
 				local carX := (relativePos - 1) // 2 * CAR_GAP_W + CAR_FIRST_OIL_X + CAR_MP_X_DEVIATION
-				local carY := (relativePos & 1 = 0 ? CAR_LOWER_OIL_Y : CAR_UPPER_OIL_Y) + CAR_MP_Y_DEVIATION
+				local carY := relativePos & 1 = 0 ? (CAR_LOWER_OIL_Y + CAR_MP_LOWER_Y_DEVIATION) : (CAR_UPPER_OIL_Y + CAR_MP_UPPER_Y_DEVIATION)
 				local oilColor := GetPixel(carX, carY)
 				local oilR := oilColor & 0xFF
 				local oilG := (oilColor & 0xFF00) >> 8

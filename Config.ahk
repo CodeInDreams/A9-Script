@@ -19,3 +19,5 @@ ENABLE_DAILY_RACE := true
 ENABLE_MULTI_PLAYER_RACE := true
 ; true/false，默认开启/关闭生涯赛事
 ENABLE_CAREER_RACE := true
+; 允许脚本使用每个段位的前几辆车来跑多人
+MP_MAX_CARS_PER_LEVEL = 4
