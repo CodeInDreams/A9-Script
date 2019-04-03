@@ -315,11 +315,14 @@ UpdateTicket() ; 检查并更新票数，返回值表示票数是否变化
 	if (ticketChange > 0) ; 票数变化时，更新票和计时器
 	{
 		tickets += ticketChange
+		ticketTime += ticketChange * 600000
 		if (tickets > 10)
-			tickets := 10
+		{
+            tickets := 10
+            ticketTime := A_TickCount
+        }
 		else if (tickets < 0)
 			tickets := 0
-		ticketTime += ticketChange * 600000
 		return true
 	}
 	return false
