@@ -183,6 +183,7 @@ enableDebug := false ; 是否启用调试
 CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到时间范围内时启动A9
 {
 	global RUN_TIME_SCOPE, DELAY_SUPER_LONG, runTimeScope, needFullTicketCheck
+    static current = 0
 	if (runTimeScope == "") ; 懒加载运行时段配置
 	{
 		runTimeScope := []
@@ -195,7 +196,7 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 	}
 	current := A_Hour . ":" . A_Min
 	For k, scope in runTimeScope
-		if (current > scope[1] && current < scope[2])
+		if (current >= scope[1] && current <= scope[2])
 			return
 	ShowTrayTip("当前时段不运行游戏")
 	needFullTicketCheck := true
@@ -204,8 +205,9 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 	Loop
 	{
 		Sleep DELAY_SUPER_LONG
+		current := A_Hour . ":" . A_Min
 		For k, scope in runTimeScope
-			if (current > scope[1] && current < scope[2])
+			if (current >= scope[1] && current <= scope[2])
 				Restart()
 	}
 }
@@ -299,7 +301,14 @@ GoHome() ; 回到A9首页(比赛中不可用)，
 	WaitPopUp()
 }
 
-UpdateTicket() ; 更新票数，返回值表示票数是否变化
+CheckTicket() ; 检查票数，不实际执行更新，返回值表示票数是否变化
+{
+	global ticketTime
+	ticketChange := (A_TickCount - ticketTime) // 600000
+	return (ticketChange > 0)
+}
+
+UpdateTicket() ; 检查并更新票数，返回值表示票数是否变化
 {
 	global tickets, ticketTime
 	ticketChange := (A_TickCount - ticketTime) // 600000
@@ -426,7 +435,7 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 		RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
 	RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
-	while !UpdateTicket()
+	while (!CheckTicket() && ENABLE_MULTI_PLAYER_RACE)
 	{
 		while !CheckPixel(MP_START_X, MP_START_Y, MP_START_COLOR_NORMAL)
 		{
@@ -507,7 +516,7 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 	RandomClick(EURO_CHAPTER_X, EURO_CHAPTER_Y, DELAY_SHORT, DELAY_SHORT, 2)
 	RandomClick(EURO_SEASON_X, EURO_SEASON_Y, , DELAY_MIDDLE, 2)
 	local carArraySize := CAREER_CARS.MaxIndex()
-	while (!UpdateTicket() && ENABLE_CAREER_RACE) ; 票无变化 且 启用生涯赛事
+	while (!CheckTicket() && ENABLE_CAREER_RACE) ; 票无变化 且 启用生涯赛事
 	{
 		CheckTime()
 		WaitPopUp()
@@ -567,7 +576,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 				Restart()
 			Swipe(239, 503, 1837, 511)
 		}
-		ToolTip 正在检查第%indexOfCar%辆车
+		ShowToolTip("正在检查第" . indexOfCar . "辆车")
 		Sleep DELAY_SHORT
 		local relativePos := indexOfCar
 		while relativePos > 6
@@ -591,7 +600,6 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		local maxB := CAR_RUNABLE_COLOR_MAX >> 16
 		if (oilR < minR || oilR > maxR || oilG < minG || oilG > maxG || oilB < minB || oilB > maxB)
 			return false
-		ToolTip
 		RandomClick(carX - 220, carY - 150, , DELAY_LONG)
 	}
 	WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED)
