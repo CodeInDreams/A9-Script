@@ -53,4 +53,4 @@ This project is licensed under the terms of the GPL license. See full license in
 | Ctrl+Shift+F12 | 强制退出 |
 #### 新功能
 
-> 参阅[此Wiki页面](https://github.com/CodeInDreams/A9-Script/projects/1)
+> 参阅[此看板](https://github.com/CodeInDreams/A9-Script/projects/1)
