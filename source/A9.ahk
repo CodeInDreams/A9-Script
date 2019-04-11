@@ -356,10 +356,10 @@ CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别；�
 	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime, needFullTicketCheck
 	if (!needFullTicketCheck)
 		return
+	CheckReward()
 	ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
 	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
 	{
-		CheckReward()
 		if CheckPixelWithDeviation(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR, 120) ; 检测到1数字颜色，因为1很细，所以缩小显示后颜色偏差较大，这里允许120误差
 		{
 			Debug("第" . A_Index . "次：1 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y))
@@ -416,7 +416,6 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 			local findDailyCar := false
 			Loop 6
 			{
-				CheckReward()
 				local dx := (A_Index - 1) * DAILY_CAR_GAP_W
 				local feature1 = CheckPixelWithDeviation(DAILY_CAR_FEATURE_1_X + dx, DAILY_CAR_FEATURE_1_Y, DAILY_CAR_FEATURE_1_COLOR)
 				local feature2 = CheckPixelWithDeviation(DAILY_CAR_FEATURE_2_X + dx, DAILY_CAR_FEATURE_2_Y, DAILY_CAR_FEATURE_2_COLOR)
@@ -500,6 +499,8 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 		Debug("段位：" . maxLevel)
 		RandomClick(MP_START_X_1, MP_START_Y, , DELAY_MIDDLE)
 		WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+		if (maxLevel = 5) ; 由于目前选车机制，后几辆车选不了，所以这里暂时不用传奇车辆
+			maxLevel := 4
 		Loop %maxLevel%
 		{
 			local levelX := MP_LEVEL_X + MP_LEVEL_GAP * (maxLevel - A_Index)
