@@ -54,3 +54,7 @@ This project is licensed under the terms of the GPL license. See full license in
 #### 新功能
 
 > 参阅[此看板](https://github.com/CodeInDreams/A9-Script/projects/1)
+
+#### 常见问题
+
+> 参阅[此Wiki页面](https://github.com/CodeInDreams/A9-Script/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98-FAQ)
