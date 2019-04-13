@@ -51,7 +51,7 @@ This project is licensed under the terms of the GPL license. See full license in
 | Ctrl+Shift+F9 | 重置 |
 | Ctrl+F12 | 关闭A9并退出 |
 | Ctrl+Shift+F12 | 强制退出 |
-#### 新功能
+#### 更新计划
 
 > 参阅[此看板](https://github.com/CodeInDreams/A9-Script/projects/1)
 
