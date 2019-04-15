@@ -4,6 +4,7 @@
 */
 
 #NoEnv
+CAREER_RACE_X = 1530
 #SingleInstance Force
 #Persistent
 SetBatchLines -1
@@ -28,7 +29,6 @@ MULTI_PLAYER_RACE_X = 851
 MULTI_PLAYER_RACE_Y = 973
 MULTI_PLAYER_RACE_COLOR = 0xFFFFFF
 ; 我的生涯
-CAREER_RACE_X = 1530
 CAREER_RACE_Y = 973
 CAREER_RACE_COLOR = 0xFFFFFF
 ; 返回
@@ -470,7 +470,14 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 	CheckTime()
 	if !CheckPixel(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, MULTI_PLAYER_RACE_COLOR)
 		RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
-	RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE)
+	if CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR) ; 检测多人包
+	{
+		RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
+		RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
+		WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
+		RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
+	}
+	RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y + MP_RACE_GAP_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	while (!CheckTicket() && ENABLE_MULTI_PLAYER_RACE)
 	{
@@ -482,7 +489,7 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 				RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
 				WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
 				RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
-				RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
+				RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y + MP_RACE_GAP_Y, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
 				WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 			}
 			if (CheckPixel(MP_START_MISTAKE_X, MP_START_MISTAKE_Y, MP_START_MISTAKE_COLOR))
