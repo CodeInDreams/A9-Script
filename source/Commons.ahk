@@ -170,27 +170,10 @@ Swipe(fromX, fromY, toX, toY) ; 滑动
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
 	dragToY := GetY(toY)
-	SetMouseDelay 0
-	Click %dragFromX%, %dragFromY%, D
-	dx := Abs(dragToX - dragFromX)
-	dy := Abs(dragToY - dragFromY)
-	part := (dx > dy ? dx : dy)
-	dxPart := dx / part
-	if (dragFromX > dragToX)
-		dxPart := -dxPart
-	dyPart := dy / part
-	if (dragFromY > dragToY)
-		dyPart := -dyPart
-	Loop %part%
-	{
-		MouseMove dxPart, dyPart, , R
-		if (A_Index & 0xF = 0) ; 减少二进制位1的个数，来提高精度，但会增加延迟
-			Sleep 1
-	}
+	MouseMove dragFromX, dragFromY
+	SendEvent {Click D}
 	MouseMove dragToX, dragToY
-	Sleep DELAY_VERY_SHORT
-	Click %dragToX%, %dragToY%, U
-	SetMouseDelay 10ms
+	SendEvent {Click U}
 	Sleep DELAY_VERY_SHORT
 }
 

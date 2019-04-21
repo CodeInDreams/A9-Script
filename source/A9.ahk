@@ -12,6 +12,7 @@ SetWorkingDir %A_ScriptDir%
 Menu Tray, Icon, logo_w.ico, , 1
 CoordMode Pixel, Client
 CoordMode Mouse, Client
+SetDefaultMouseSpeed 4
 
 ; 2160×1080下的A9专用常量
 
@@ -19,6 +20,10 @@ CoordMode Mouse, Client
 NETWORK_ERROR_X = 940
 NETWORK_ERROR_Y = 765
 NETWORK_ERROR_COLOR = 0xFFFFFF
+; 特殊赛事
+SPECIAL_RACE_X = 150
+SPECIAL_RACE_Y = 973
+SPECIAL_RACE_COLOR = 0xFFFFFF
 ; 每日赛事
 DAILY_RACE_X = 500
 DAILY_RACE_Y = 973
@@ -164,8 +169,12 @@ CAR_FEATURE_COLOR_LOCKED = 0x7F7F7F
 TICKET_FROM_X = 1888
 TICKET_TO_X = 1913
 TICKET_Y = 192
+TICKET_FROM_X_SPECIAL = 1830
+TICKET_TO_X_SPECIAL = 1855
+TICKET_Y_SPECIAL = 200
 TICKET_COLOR_BG = 0x000000
 TICKET_COLOR = 0x0DB090
+TICKET_LIMIT = 9
 ; 每日车辆战利品搜索相关
 DAILY_CAR_FEATURE_1_X = 221
 DAILY_CAR_FEATURE_1_Y = 888
@@ -193,6 +202,9 @@ OPERATE_MODE_Y = 840
 OPERATE_MODE_RANGE = 12
 ; 每日车辆用车顺序
 DAILY_CARS := [1, 5, 14, 2, 3, 4]
+; 自定义赛事
+CUSTOM_TYPE_SPECIAL = special
+CUSTOM_TYPE_DAILY = daily
 
 ; 全局变量
 
@@ -270,7 +282,7 @@ OpenApp() ; 启动A9
 			RandomClick(NETWORK_ERROR_X, NETWORK_ERROR_Y, , DELAY_VERY_LONG)
 		else
 			Sleep DELAY_LONG
-		if (Mod(A_Index, 10) = 0)
+		if (enableDebug && Mod(A_Index, 10) = 0)
 			Debug(NETWORK_ERROR_X . "/" . NETWORK_ERROR_Y . " " . GetPixel(NETWORK_ERROR_X, NETWORK_ERROR_Y))
 	}
 }
@@ -287,9 +299,7 @@ Restart() ; 重置，不会影响票数计时器
 	if (forceRestart || !(hasBack && mainCross || mainNormal && secondNormal)) ; 60秒内重置过，或者检测不到菜单页特征值
 	{
 		if (enableDebug)
-		{
 			Debug("Restarting.", "forceRestart: " . forceRestart, "hasBack: " . hasBack, "mainCross: " . mainCross, "mainNormal: " . mainNormal, "secondNormal: " . secondNormal)
-		}
 		if (!enableDebug)
 			CloseApp()
 		OpenApp()
@@ -300,9 +310,11 @@ Restart() ; 重置，不会影响票数计时器
 
 RunRaces() ; 开始比赛
 {
-	global ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE
+	global ENABLE_CUSTOM_RACE, ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE
 	Loop
 	{
+		if (ENABLE_CUSTOM_RACE)
+			RunCustomRace()
 		if (ENABLE_DAILY_RACE)
 			RunDailyRace()
 		if (ENABLE_MULTI_PLAYER_RACE)
@@ -351,44 +363,54 @@ UpdateTicket() ; 检查并更新票数，返回值表示票数是否变化
 	return false
 }
 
-CheckFullTicket() ; 满票识别，使用"10"的十位"1"作为特征识别；如果票满，会刷新票数和票数计时器；在每个时间段，只检测到一次满票即可，后续全程由票数计时器计算
+CheckFullTicket(type:="daily") ; 满票识别，使用"10"的十位"1"作为特征识别；如果票满，会刷新票数和票数计时器；在每个时间段，只检测到一次满票即可，后续全程由票数计时器计算
 {
-	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime, needFullTicketCheck
+	global TICKET_FROM_X, TICKET_TO_X, TICKET_Y, TICKET_FROM_X_SPECIAL, TICKET_TO_X_SPECIAL, TICKET_Y_SPECIAL, TICKET_COLOR, TICKET_COLOR_BG, tickets, ticketTime, needFullTicketCheck, CUSTOM_TYPE_SPECIAL, CUSTOM_TYPE_DAILY
 	if (!needFullTicketCheck)
 		return
 	CheckReward()
+	if (type = CUSTOM_TYPE_SPECIAL) {
+		ticketFromX := TICKET_FROM_X_SPECIAL
+		ticketToX := TICKET_TO_X_SPECIAL
+		ticketY := TICKET_Y_SPECIAL
+	} else if (type = CUSTOM_TYPE_DAILY) {
+		ticketFromX := TICKET_FROM_X
+		ticketToX := TICKET_TO_X
+		ticketY := TICKET_Y
+	}
+	Debug(tickets, ticketFromX, ticketToX, ticketY)
 	ticketFlag := 0 ; 二进制最低位标记背景，次低位标记特征颜色，当匹配到"背景-特征颜色-背景"的时候认为票满
-	while (A_Index + TICKET_FROM_X < TICKET_TO_X && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
+	while (A_Index + ticketFromX < ticketToX && tickets < 10) ; 判断票是否已满，这里使用界面上"10/10"分子中"10"的"1"这个数字作为特征识别
 	{
-		if CheckPixelWithDeviation(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR, 120) ; 检测到1数字颜色，因为1很细，所以缩小显示后颜色偏差较大，这里允许120误差
+		if CheckPixelWithDeviation(A_Index + ticketFromX, ticketY, TICKET_COLOR, 120) ; 检测到1数字颜色，因为1很细，所以缩小显示后颜色偏差较大，这里允许120误差
 		{
-			Debug("第" . A_Index . "次：1 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y))
+			Debug("第" . A_Index . "次：1 " . GetX(A_Index + ticketFromX) . " " . GetY(ticketY))
 			ticketFlag |= 2
 		}
-		else if CheckPixel(A_Index + TICKET_FROM_X, TICKET_Y, TICKET_COLOR_BG) ; 检测到1背景色
+		else if CheckPixel(A_Index + ticketFromX, ticketY, TICKET_COLOR_BG) ; 检测到1背景色
 		{
 			if (ticketFlag & 3 = 3) ; 检测到背景色是来自右边
 			{
-				Debug("第" . A_Index . "次：右背景 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y))
+				Debug("第" . A_Index . "次：右背景 " . GetX(A_Index + ticketFromX) . " " . GetY(ticketY))
 				tickets := 10
 				ticketTime := A_TickCount
 				needFullTicketCheck := false
 			}
 			else ; 检测到背景色是来自左边
 			{
-				Debug("第" . A_Index . "次：左背景 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y))
+				Debug("第" . A_Index . "次：左背景 " . GetX(A_Index + ticketFromX) . " " . GetY(ticketY))
 				ticketFlag |= 1
 			}
 		}
 		else ; 其他
 		{
-			Debug("第" . A_Index . "次：失败 " . GetX(A_Index + TICKET_FROM_X) . " " . GetY(TICKET_Y) . " " . GetPixel(A_Index + TICKET_FROM_X, TICKET_Y))
+			Debug("第" . A_Index . "次：失败 " . GetX(A_Index + ticketFromX) . " " . GetY(ticketY) . " " . GetPixel(A_Index + ticketFromX, ticketY))
 		}
 	}
 }
 
-CheckReward() ; 检查是否有需要结算的奖励可以领取
-{
+; 检查是否有需要结算的奖励可以领取
+CheckReward() {
 	global GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_LIGHT_GRAY, DAILY_REWORD_READY_X, DAILY_REWORD_READY_X_2, DAILY_REWORD_READY_Y, DAILY_REWORD_READY_COLOR, DELAY_LONG
 	if CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_LIGHT_GRAY) 
 		&& CheckPixel(DAILY_REWORD_READY_X, DAILY_REWORD_READY_Y, DAILY_REWORD_READY_COLOR) 
@@ -396,7 +418,80 @@ CheckReward() ; 检查是否有需要结算的奖励可以领取
 		RandomClick(DAILY_REWORD_READY_X_2, DAILY_REWORD_READY_Y, , DELAY_LONG)
 }
 
-RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于预留值，就开始比赛
+; 自定义赛事
+RunCustomRace() {
+	global
+	GoHome()
+	CheckTime()
+	UpdateTicket()
+	local customRaceX, customRaceY, customRaceColor
+	if (CUSTOM_TYPE = CUSTOM_TYPE_SPECIAL) {
+		customRaceX := SPECIAL_RACE_X
+		customRaceY := SPECIAL_RACE_Y
+		customRaceColor := SPECIAL_RACE_COLOR
+	} else {
+		customRaceX := DAILY_RACE_X
+		customRaceY := DAILY_RACE_Y
+		customRaceColor := DAILY_RACE_COLOR
+	}
+	if !CheckPixel(customRaceX, customRaceY, customRaceColor)
+		RandomClick(customRaceX, customRaceY, , DELAY_MIDDLE)
+	RandomClick(customRaceX, customRaceY, , DELAY_MIDDLE)
+	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
+	CheckFullTicket(CUSTOM_TYPE)
+	if (tickets >= TICKET_LIMIT)
+	{
+		CheckReward()
+		if (CUSTOM_TYPE = CUSTOM_TYPE_SPECIAL) {
+			Loop 6 {
+				MouseMove GetX(559), GetY(672)
+				SendEvent {Click D}
+				MouseMove GetX(1959), GetY(672)
+				SendEvent {Click U}
+				Sleep 100
+			}
+			Sleep 2000
+			Loop 2 {
+				MouseMove GetX(1959), GetY(672)
+				SendEvent {Click D}
+				MouseMove GetX(559), GetY(672)
+				SendEvent {Click U}
+				Sleep 100
+			}
+			if (GetPixel(1283, 519) & 0xFF > 0xD0)
+				RandomClick(1283, 519, DELAY_MIDDLE, DELAY_MIDDLE)
+			else if (GetPixel(1683, 519) & 0xFF > 0xD0)
+				RandomClick(1683, 519, DELAY_MIDDLE, DELAY_MIDDLE)
+			else if (GetPixel(883, 519) & 0xFF > 0xD0)
+				RandomClick(883, 519, DELAY_MIDDLE, DELAY_MIDDLE)
+			else
+				return
+		}
+		local carArraySize := CUSTOM_CARS.MaxIndex()
+		while (tickets >= TICKET_LIMIT && ENABLE_CUSTOM_RACE)
+		{
+			CheckTime()
+			UpdateTicket()
+			tickets -= CUSTOM_TICKET
+			WaitPopUp()
+			WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
+			RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
+			local startIndex
+			Random startIndex, 0, carArraySize
+			while (A_Index < startIndex || !StartRace(CUSTOM_CARS[A_Index], 50, 90))
+			{
+				if (A_Index >= startIndex + carArraySize)
+				{
+					ShowTrayTip("无可用车辆")
+					tickets += CUSTOM_TICKET
+					return
+				}
+			}
+		}
+	}
+}
+
+RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 {
 	global
 	GoHome()
@@ -407,7 +502,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 	RandomClick(DAILY_RACE_X, DAILY_RACE_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	CheckFullTicket()
-	if (tickets > TICKET_LIMIT) ; 当前票大于预留值(也就是还有票可用)
+	if (tickets >= TICKET_LIMIT)
 	{
 		CheckReward()
 		RandomClick(DAILY_CAR_CLICK_X, DAILY_CAR_CLICK_Y, DELAY_SHORT, DELAY_MIDDLE) ; 这里为了让图标缩小到同样大小，便于匹配特征点。如果被点击的赛事是要找的目标(有时会出现乱序现象)，那就匹配不到，直接下次再说
@@ -440,7 +535,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 		{
 			RandomClick(dailyRaceX, dailyRaceY, , DELAY_MIDDLE)
 			RandomClick(dailyRaceX, dailyRaceY, , DELAY_MIDDLE)
-			while (tickets > TICKET_LIMIT && ENABLE_DAILY_RACE)
+			while (tickets >= TICKET_LIMIT && ENABLE_DAILY_RACE)
 			{
 				CheckTime()
 				UpdateTicket()
@@ -455,6 +550,7 @@ RunDailyRace() ; 从A9首页打开每日车辆战利品赛事。只要票大于�
 					if (A_Index >= startIndex + carArraySize)
 					{
 						ShowTrayTip("无可用车辆")
+						tickets += 1
 						return
 					}
 				}
@@ -477,7 +573,7 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 		WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
 		RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
 	}
-	RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y + MP_RACE_GAP_Y, , DELAY_MIDDLE)
+	RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	while (!CheckTicket() && ENABLE_MULTI_PLAYER_RACE)
 	{
@@ -489,7 +585,7 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 				RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
 				WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
 				RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
-				RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y + MP_RACE_GAP_Y, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
+				RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
 				WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 			}
 			if (CheckPixel(MP_START_MISTAKE_X, MP_START_MISTAKE_Y, MP_START_MISTAKE_COLOR))
@@ -735,7 +831,7 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 
 RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目前在赛事开始前读取时和赛事结束后下一步时不可用
 {
-	if (OPERATE_MODE = 1)
+	if (OPERATE_MODE)
 	{
 		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; 比赛中则先退出比赛，如果比赛中检测失效，那这里不会正确改回操作模式
 		{

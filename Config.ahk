@@ -7,17 +7,27 @@
 OPERATE_MODE = 0
 ; 应用是顶栏的"首页"后的第几个窗口
 APP_INDEX = 2
-; 票预留上限，0~10，建议小于9以免浪费票
-TICKET_LIMIT = 8
 ; 生涯用车顺序，第一排1、3、5、7，第二排2、4、6、8，建议前6以加快选车过程
 CAREER_CARS := [5, 6, 4, 7, 10, 12, 13]
 ; 脚本在哪些时间范围运行，多个时间段用英文逗号分隔，如 00:00-08:00, 09:00-12:15, 13:55-18:30，注意小于10的加0
 RUN_TIME_SCOPE = 00:00-23:59
 ; true/false，默认开启/关闭每日赛事
-ENABLE_DAILY_RACE := true
+ENABLE_DAILY_RACE := false
 ; true/false，默认开启/关闭多人赛事
 ENABLE_MULTI_PLAYER_RACE := true
 ; true/false，默认开启/关闭生涯赛事
 ENABLE_CAREER_RACE := false
+
+; true/false，默认开启/关闭自定义赛事
+ENABLE_CUSTOM_RACE := true
+; special/daily，自定义赛事类型，特殊赛事/每日赛事
+CUSTOM_TYPE = special
+; 自定义赛事次序
+CUSTOM_INDEX = 6
+; 自定义赛事票数消耗
+CUSTOM_TICKET = 2
+; 自定义赛事用车顺序
+CUSTOM_CARS := [13, 12, 16, 17]
+
 ; 允许脚本使用每个段位的前几辆车来跑多人
-MP_MAX_CARS_PER_LEVEL = 3
+MP_MAX_CARS_PER_LEVEL = 6
