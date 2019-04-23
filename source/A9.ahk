@@ -12,7 +12,6 @@ SetWorkingDir %A_ScriptDir%
 Menu Tray, Icon, logo_w.ico, , 1
 CoordMode Pixel, Client
 CoordMode Mouse, Client
-SetDefaultMouseSpeed 4
 
 ; 2160×1080下的A9专用常量
 
@@ -439,37 +438,33 @@ RunCustomRace() {
 	RandomClick(customRaceX, customRaceY, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	CheckFullTicket(CUSTOM_TYPE)
-	if (tickets >= TICKET_LIMIT)
-	{
+	if (tickets >= TICKET_LIMIT) {
 		CheckReward()
 		if (CUSTOM_TYPE = CUSTOM_TYPE_SPECIAL) {
-			Loop 6 {
-				MouseMove GetX(559), GetY(672)
-				SendEvent {Click D}
-				MouseMove GetX(1959), GetY(672)
-				SendEvent {Click U}
-				Sleep 100
+			local found := false
+			while (!found) {
+				if (A_Index < 6)
+					Swipe(559, 672, 1959, 672)
+				else if (A_Index < 15)
+					Swipe(1959, 672, 559, 672)
+				else
+					return
+				local dx := 481
+				while (dx < 2090) {
+					if (GetPixel(dx, 519) & 0xFF > 0xD0) {
+						RandomClick(dx, 519, DELAY_MIDDLE, DELAY_MIDDLE)
+						found := true
+						Break
+					}
+					else
+						dx += 200
+				}
 			}
-			Sleep 2000
-			Loop 2 {
-				MouseMove GetX(1959), GetY(672)
-				SendEvent {Click D}
-				MouseMove GetX(559), GetY(672)
-				SendEvent {Click U}
-				Sleep 100
-			}
-			if (GetPixel(1283, 519) & 0xFF > 0xD0)
-				RandomClick(1283, 519, DELAY_MIDDLE, DELAY_MIDDLE)
-			else if (GetPixel(1683, 519) & 0xFF > 0xD0)
-				RandomClick(1683, 519, DELAY_MIDDLE, DELAY_MIDDLE)
-			else if (GetPixel(883, 519) & 0xFF > 0xD0)
-				RandomClick(883, 519, DELAY_MIDDLE, DELAY_MIDDLE)
-			else
+			if (!found)
 				return
 		}
 		local carArraySize := CUSTOM_CARS.MaxIndex()
-		while (tickets >= TICKET_LIMIT && ENABLE_CUSTOM_RACE)
-		{
+		while (tickets >= TICKET_LIMIT && ENABLE_CUSTOM_RACE) {
 			CheckTime()
 			UpdateTicket()
 			tickets -= CUSTOM_TICKET
@@ -478,10 +473,8 @@ RunCustomRace() {
 			RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
 			local startIndex
 			Random startIndex, 0, carArraySize
-			while (A_Index < startIndex || !StartRace(CUSTOM_CARS[A_Index], 50, 90))
-			{
-				if (A_Index >= startIndex + carArraySize)
-				{
+			while (A_Index < startIndex || !StartRace(CUSTOM_CARS[A_Index], 50, 90)) {
+				if (A_Index >= startIndex + carArraySize) {
 					ShowTrayTip("无可用车辆")
 					tickets += CUSTOM_TICKET
 					return
@@ -720,14 +713,14 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		{
 			if A_Index > 10
 				Restart()
-			Swipe(239, 503, 1837, 511)
+			Swipe(274, 511, 1837, 511)
 		}
 		ShowToolTip("正在检查第" . indexOfCar . "辆车")
 		Sleep DELAY_SHORT
 		local relativePos := indexOfCar
 		while relativePos > 6
 		{
-			Swipe(1837, 520, 239, 520)
+			Swipe(1837, 520, 274, 520) ; 这游戏需要多滑动20像素
 			relativePos -= 6
 			if (releativePos > 6 && CheckPixel(CAR_TAIL_X, CAR_TAIL_Y, CAR_TAIL_COLOR))
 				return false
@@ -869,7 +862,7 @@ Init() ; 脚本主逻辑
 ShowRaceSwitchStatus() ; 气泡显示赛事开启/关闭状态
 {
 	global ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE
-	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关") . "`n多人：" . (ENABLE_MULTI_PLAYER_RACE ? "开" : "关") . "`n生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"))
+	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关"), "多人：" . (ENABLE_MULTI_PLAYER_RACE ? "开" : "关"), "生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"), "自定：" . (ENABLE_CUSTOM_RACE ? "开" : "关"))
 }
 
 Init()
@@ -930,5 +923,15 @@ return
 
 ^+F3:: ; 关闭生涯赛事
 ENABLE_CAREER_RACE := false
+ShowRaceSwitchStatus()
+return
+
+^F4:: ; 开启自定义赛事
+ENABLE_CUSTOM_RACE := true
+ShowRaceSwitchStatus()
+return
+
+^+F4:: ; 关闭自定义赛事
+ENABLE_CUSTOM_RACE := false
 ShowRaceSwitchStatus()
 return

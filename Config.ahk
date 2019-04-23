@@ -12,7 +12,7 @@ CAREER_CARS := [5, 6, 4, 7, 10, 12, 13]
 ; 脚本在哪些时间范围运行，多个时间段用英文逗号分隔，如 00:00-08:00, 09:00-12:15, 13:55-18:30，注意小于10的加0
 RUN_TIME_SCOPE = 00:00-23:59
 ; true/false，默认开启/关闭每日赛事
-ENABLE_DAILY_RACE := false
+ENABLE_DAILY_RACE := true
 ; true/false，默认开启/关闭多人赛事
 ENABLE_MULTI_PLAYER_RACE := true
 ; true/false，默认开启/关闭生涯赛事

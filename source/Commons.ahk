@@ -117,7 +117,6 @@ CheckPixelWithDeviation(x, y, color, deviation:=200) ; 验证像素颜色，允�
 	cr := color & 0xFF
 	cg := (color & 0xFF00) >> 8
 	cb := color >> 16
-	Debug("误差：" . Abs(pr - cr) + Abs(pg - cg) + Abs(pb - cb))
 	return (Abs(pr - cr) + Abs(pg - cg) + Abs(pb - cb) < deviation)
 }
 
@@ -165,16 +164,28 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 Swipe(fromX, fromY, toX, toY) ; 滑动
 {
 	CalcWin()
-	global AH, VH, DELAY_VERY_SHORT
+	global DELAY_VERY_SHORT
 	dragFromX := GetX(fromX)
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
 	dragToY := GetY(toY)
+	buffer := 30
+	dx := dragToX > dragFromX + buffer ? buffer : dragFromX > dragToX + buffer ? -buffer : 0
+	dy := dragToY > dragFromY + buffer ? buffer : dragFromY > dragToY + buffer ? -buffer : 0
+	SetDefaultMouseSpeed 0
 	MouseMove dragFromX, dragFromY
-	SendEvent {Click D}
-	MouseMove dragToX, dragToY
-	SendEvent {Click U}
+	Click D
 	Sleep DELAY_VERY_SHORT
+	SetDefaultMouseSpeed 40
+	MouseMove dragFromX + dx, dragFromY + dy
+	SetDefaultMouseSpeed 15
+	MouseMove dragToX - dx, dragToY - dy
+	SetDefaultMouseSpeed 40
+	MouseMove dragToX, dragToY
+	Sleep DELAY_VERY_SHORT
+	Click U
+	Sleep DELAY_VERY_SHORT
+	SetDefaultMouseSpeed 2
 }
 
 ShowTrayTip(text, period:=1000) ; 显示period毫秒的托盘区提示
@@ -188,10 +199,12 @@ HideTrayTip() ; 隐藏托盘区提示
 	TrayTip
 }
 
-ShowToolTip(text, period:=1000) ; 显示period毫秒的气泡提示
+ShowToolTip(text*) ; 显示气泡提示，持续3秒
 {
-	Tooltip %text%
-	SetTimer HideToolTip, -%period%
+	for k, v in text
+		formatted .= formatted = "" ? v : ("`n" . v)
+	Tooltip %formatted%
+	SetTimer HideToolTip, -3000
 }
 
 HideToolTip() ; 隐藏气泡提示
