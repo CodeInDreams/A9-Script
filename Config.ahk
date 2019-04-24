@@ -12,7 +12,7 @@ CAREER_CARS := [5, 6, 4, 7, 10, 12, 13]
 ; 脚本在哪些时间范围运行，多个时间段用英文逗号分隔，如 00:00-08:00, 09:00-12:15, 13:55-18:30，注意小于10的加0
 RUN_TIME_SCOPE = 00:00-23:59
 ; true/false，默认开启/关闭每日赛事
-ENABLE_DAILY_RACE := true
+ENABLE_DAILY_RACE := false
 ; true/false，默认开启/关闭多人赛事
 ENABLE_MULTI_PLAYER_RACE := true
 ; true/false，默认开启/关闭生涯赛事
@@ -22,7 +22,7 @@ ENABLE_CAREER_RACE := false
 ENABLE_CUSTOM_RACE := true
 ; special/daily，自定义赛事类型，特殊赛事/每日赛事
 CUSTOM_TYPE = special
-; 自定义赛事次序
+; 自定义赛事次序，该字段暂不生效
 CUSTOM_INDEX = 6
 ; 自定义赛事票数消耗
 CUSTOM_TICKET = 2

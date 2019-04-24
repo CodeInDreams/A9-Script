@@ -861,7 +861,7 @@ Init() ; 脚本主逻辑
 
 ShowRaceSwitchStatus() ; 气泡显示赛事开启/关闭状态
 {
-	global ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE
+	global ENABLE_DAILY_RACE, ENABLE_MULTI_PLAYER_RACE, ENABLE_CAREER_RACE, ENABLE_CUSTOM_RACE
 	ShowToolTip("每日：" . (ENABLE_DAILY_RACE ? "开" : "关"), "多人：" . (ENABLE_MULTI_PLAYER_RACE ? "开" : "关"), "生涯：" . (ENABLE_CAREER_RACE ? "开" : "关"), "自定：" . (ENABLE_CUSTOM_RACE ? "开" : "关"))
 }
 
