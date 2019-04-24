@@ -47,6 +47,8 @@ This project is licensed under the terms of the GPL license. See full license in
 | Ctrl+Shift+F2 | 关闭多人赛事 |
 | Ctrl+F3 | 启用生涯赛事 |
 | Ctrl+Shift+F3 | 关闭生涯赛事 |
+| Ctrl+F4 | 启用自定义赛事 |
+| Ctrl+Shift+F4 | 关闭自定义赛事 |
 | Ctrl+F9 | 暂停/恢复 |
 | Ctrl+Shift+F9 | 重置 |
 | Ctrl+F12 | 关闭A9并退出 |
