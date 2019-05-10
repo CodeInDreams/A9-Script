@@ -421,6 +421,7 @@ CheckReward() {
 RunCustomRace() {
 	global
 	GoHome()
+	flag := false
 	CheckTime()
 	UpdateTicket()
 	local customRaceX, customRaceY, customRaceColor
@@ -488,6 +489,7 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 {
 	global
 	GoHome()
+	flag := false
 	CheckTime()
 	UpdateTicket()
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
@@ -555,6 +557,7 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 {
 	global
+	flag := true
 	GoHome()
 	CheckTime()
 	if !CheckPixel(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, MULTI_PLAYER_RACE_COLOR)
@@ -566,7 +569,12 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 		WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
 		RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
 	}
-	RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE)
+	local mpRaceY
+	if (MP_RACE_INDEX = 1)
+		mpRaceY := MP_RACE_FIRST_Y
+	else if (MP_RACE_INDEX = 2)
+		mpRaceY := MP_RACE_FIRST_Y + MP_RACE_GAP_Y
+	RandomClick(MP_RACE_FIRST_X, mpRaceY, , DELAY_MIDDLE)
 	WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 	while (!CheckTicket() && ENABLE_MULTI_PLAYER_RACE)
 	{
@@ -578,7 +586,7 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 				RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
 				WaitColor(NEXT_X_2, NEXT_Y, NEXT_COLOR_WHITE)
 				RandomClick(NEXT_X_2, NEXT_Y, , DELAY_LONG)
-				RandomClick(MP_RACE_FIRST_X, MP_RACE_FIRST_Y, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
+				RandomClick(MP_RACE_FIRST_X, mpRaceY, , DELAY_MIDDLE) ; 因为这里回到了多人首页，所以要重新进二级页面
 				WaitColor(BACK_X, BACK_Y, BACK_COLOR)
 			}
 			if (CheckPixel(MP_START_MISTAKE_X, MP_START_MISTAKE_Y, MP_START_MISTAKE_COLOR))
@@ -750,7 +758,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 	Sleep DELAY_SUPER_LONG
 	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
 	{
-		if CheckPixel(MP_ERROR_X, MP_ERROR_Y, MP_ERROR_COLOR)
+		if CheckPixel(MP_ERROR_X, MP_ERROR_Y, MP_ERROR_COLOR) && flag
 		{
 			RandomClick(MP_ERROR_X, MP_ERROR_Y, , DELAY_LONG)
 			return false
