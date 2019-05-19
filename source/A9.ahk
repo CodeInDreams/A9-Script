@@ -463,6 +463,14 @@ RunCustomRace() {
 			}
 			if (!found)
 				return
+		} else {
+			local customIndex := CUSTOM_INDEX
+			while (customIndex > 7) {
+				Swipe(DAILY_CAR_GAP_W * 5 + DAILY_CAR_FEATURE_1_X, DAILY_CAR_FEATURE_1_Y, DAILY_CAR_FEATURE_1_X, DAILY_CAR_FEATURE_1_Y)
+				customIndex -= 5
+			}
+			RandomClick((customIndex - 1) * DAILY_CAR_GAP_W + DAILY_CAR_FEATURE_1_X, DAILY_CAR_FEATURE_1_Y, , DELAY_MIDDLE)
+			RandomClick((customIndex - 1) * DAILY_CAR_GAP_W + DAILY_CAR_FEATURE_1_X, DAILY_CAR_FEATURE_1_Y, , DELAY_MIDDLE)
 		}
 		local carArraySize := CUSTOM_CARS.MaxIndex()
 		while (tickets >= TICKET_LIMIT && ENABLE_CUSTOM_RACE) {
@@ -557,6 +565,7 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 {
 	global
+	return
 	flag := true
 	GoHome()
 	CheckTime()
@@ -607,15 +616,19 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 			maxLevel := 4
 		Loop %maxLevel%
 		{
+			local special := maxLevel = 4 && A_Index = 1
 			local levelX := MP_LEVEL_X + MP_LEVEL_GAP * (maxLevel - A_Index)
-			RandomClick(levelX, MP_LEVEL_Y, , DELAY_MIDDLE)
-			while (A_Index < 3 && !(CheckPixel(MP_CAR_HEAD_1_X, MP_CAR_HEAD_1_Y, MP_CAR_HEAD_1_COLOR) && CheckPixel(MP_CAR_HEAD_2_X, MP_CAR_HEAD_2_Y, MP_CAR_HEAD_2_COLOR)))
+			RandomClick(levelX, MP_LEVEL_Y, , DELAY_LONG)
+			while (!special && A_Index < 3 && !(CheckPixel(MP_CAR_HEAD_1_X, MP_CAR_HEAD_1_Y, MP_CAR_HEAD_1_COLOR) && CheckPixel(MP_CAR_HEAD_2_X, MP_CAR_HEAD_2_Y, MP_CAR_HEAD_2_COLOR)))
 				Sleep DELAY_SHORT
+			;Swipe(1837, 520, 320, 520)
 			Loop %MP_MAX_CARS_PER_LEVEL%
 			{
 				local relativePos := A_Index
 				ToolTip 正在检查第%relativePos%辆车
 				local carX := (relativePos - 1) // 2 * (MP_CAR_GAP_W) + MP_CAR_FIRST_OIL_X
+				if (special)
+					carX += 513
 				local carY := relativePos & 1 = 0 ? MP_CAR_LOWER_OIL_Y : MP_CAR_UPPER_OIL_Y
 				local oilColor := GetPixel(carX, carY)
 				local oilR := oilColor & 0xFF
