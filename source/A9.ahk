@@ -565,7 +565,6 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 {
 	global
-	return
 	flag := true
 	GoHome()
 	CheckTime()
