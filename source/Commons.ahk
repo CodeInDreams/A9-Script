@@ -161,10 +161,17 @@ RandomClick(x, y, timePrepare:=0, timeAppend:=0, mode:=0) ; 坐标附近随机�
 	IfGreater timeAppend, 0, Sleep timeAppend
 }
 
-Swipe(fromX, fromY, toX, toY) ; 滑动
+Swipe(fromX, fromY, toX, toY, speed:=0) ; 滑动。speed，0：精准滑动，其他(0~10)：快速滑动
 {
 	CalcWin()
 	global DELAY_VERY_SHORT
+	if (speed = 0) {
+		accSpeed := 40
+		highestSpeed := 15
+	} else {
+		accSpeed := 12 - speed
+		highestSpeed := 2 + (10 - speed) // 3
+	}
 	dragFromX := GetX(fromX)
 	dragFromY := GetY(fromY)
 	dragToX := GetX(toX)
@@ -176,11 +183,11 @@ Swipe(fromX, fromY, toX, toY) ; 滑动
 	MouseMove dragFromX, dragFromY
 	Click D
 	Sleep DELAY_VERY_SHORT
-	SetDefaultMouseSpeed 40
+	SetDefaultMouseSpeed %accSpeed%
 	MouseMove dragFromX + dx, dragFromY + dy
-	SetDefaultMouseSpeed 15
+	SetDefaultMouseSpeed %highestSpeed%
 	MouseMove dragToX - dx, dragToY - dy
-	SetDefaultMouseSpeed 40
+	SetDefaultMouseSpeed %accSpeed%
 	MouseMove dragToX, dragToY
 	Sleep DELAY_VERY_SHORT
 	Click U

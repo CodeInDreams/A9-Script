@@ -20,19 +20,19 @@ NETWORK_ERROR_X = 940
 NETWORK_ERROR_Y = 765
 NETWORK_ERROR_COLOR = 0xFFFFFF
 ; 特殊赛事
-SPECIAL_RACE_X = 150
+SPECIAL_RACE_X = 500
 SPECIAL_RACE_Y = 973
 SPECIAL_RACE_COLOR = 0xFFFFFF
 ; 每日赛事
-DAILY_RACE_X = 500
+DAILY_RACE_X = 850
 DAILY_RACE_Y = 973
 DAILY_RACE_COLOR = 0xFFFFFF
 ; 多人游戏
-MULTI_PLAYER_RACE_X = 851
+MULTI_PLAYER_RACE_X = 1200
 MULTI_PLAYER_RACE_Y = 973
 MULTI_PLAYER_RACE_COLOR = 0xFFFFFF
 ; 我的生涯
-CAREER_RACE_X = 1530
+CAREER_RACE_X = 1880
 CAREER_RACE_Y = 973
 CAREER_RACE_COLOR = 0xFFFFFF
 ; 返回
@@ -114,17 +114,16 @@ EURO_RACE_Y = 640
 EURO_RACE_Y_DEVIATION = 65
 EURO_RACE_COLOR = 0x12FBC3
 ; A9运行检测
-GAME_RUNNING_CHECK_X = 686
-GAME_RUNNING_CHECK_Y = 23
-GAME_RUNNING_CHECK_COLOR_DARK = 0x191919
-GAME_RUNNING_CHECK_COLOR_GRAY = 0x343434
-GAME_RUNNING_CHECK_COLOR_LIGHT_GRAY = 0x4A4A4A
-GAME_RUNNING_CHECK_COLOR_NORMAL = 0xFFFFFF
-GAME_RUNNING_CHECK_COLOR_CROSS_1 = 0x363636
-GAME_RUNNING_CHECK_COLOR_CROSS_2 = 0x2E2E2E
-GAME_RUNNING_CHECK_X_2 = 822
-GAME_RUNNING_CHECK_Y_2 = 53
-GAME_RUNNING_CHECK_COLOR_2 = 0x040404
+GAME_RUNNING_CHECK_X_1 = 518
+GAME_RUNNING_CHECK_Y_1 = 40
+GAME_RUNNING_CHECK_COLOR_NORMAL = 0xF2F2F2
+GAME_RUNNING_CHECK_X_2 = 463
+GAME_RUNNING_CHECK_Y_2 = 48
+GAME_RUNNING_CHECK_X_3 = 570
+GAME_RUNNING_CHECK_Y_3 = 47
+GAME_RUNNING_CHECK_COLOR_CROSS_1 = 0x3B2312
+GAME_RUNNING_CHECK_COLOR_CROSS_2 = 0x353535
+GAME_RUNNING_CHECK_COLOR_CROSS_3 = 0x2E2E2E
 ; 比赛中检测
 RACING_CHECK_X = 158
 RACING_CHECK_Y = 104
@@ -246,19 +245,34 @@ CheckTime() ; 用于限制脚本运行时段，时间范围外退出A9，回到�
 	}
 }
 
+isInMenu() ; 检查是否在菜单页
+{
+	global
+	Loop
+	{
+		if CheckPixel(GAME_RUNNING_CHECK_X_1, GAME_RUNNING_CHECK_Y_1, GAME_RUNNING_CHECK_COLOR_NORMAL)
+			&& CheckPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_CROSS_1, GAME_RUNNING_CHECK_COLOR_CROSS_2, GAME_RUNNING_CHECK_COLOR_CROSS_3)
+			&& CheckPixel(GAME_RUNNING_CHECK_X_3, GAME_RUNNING_CHECK_Y_3, GAME_RUNNING_CHECK_COLOR_CROSS_1, GAME_RUNNING_CHECK_COLOR_CROSS_2, GAME_RUNNING_CHECK_COLOR_CROSS_3)			
+			return true
+		if (A_Index > 1)
+			return false
+		Sleep DELAY_MIDDLE
+	}
+}
+
 WaitPopUp() ; 消除弹窗，这包括促销广告、入队申请、俱乐部奖励、多人包，每次跑完概率弹出
 {
 	global
-	Sleep DELAY_MIDDLE
-	while CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+	Sleep DELAY_LONG
+	while !isInMenu()
 	{
 		if (A_Index <= 3) ; 第1~3次尝试关闭促销广告
-			RandomClick(SALE_AD_X, SALE_AD_Y, , DELAY_LONG)
+			Send {Esc}
 		if (A_Index > 3 && A_Index <= 6 && CheckPixel(REQUEST_X, REQUEST_Y, REQUEST_COLOR)) ; 第4~6次尝试关闭关闭入队申请
 			RandomClick(REQUEST_X, REQUEST_Y, , DELAY_LONG)
-		if (A_Index > 6 && A_Index <= 9) ; 第7~9次尝试关闭误触导致的改昵称弹窗
-			RandomClick(NICK_CLOSE_X, NICK_CLOSE_Y, , DELAY_LONG)
-		if (A_Index > 9) ; 10次直接重置
+		if (A_Index > 6 && A_Index <= 16) ; 第7~20次尝试关闭误触导致的改昵称弹窗、零氪广告(可能长达30s)等
+			Send {Esc}
+		if (A_Index > 20) ; 10次直接重置
 			Restart()
 	}
 }
@@ -271,10 +285,10 @@ OpenApp() ; 启动A9
 	{
 		if A_Index > 120
 			Restart()
-		if CheckPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2) && CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+		if isInMenu()
 		{
 			Sleep DELAY_LONG
-			Debug("Finish launching app. Matching color: " . GetPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y) . " " . GetPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2))
+			Debug("Finish launching app.")
 			Break
 		}
 		if CheckPixel(NETWORK_ERROR_X, NETWORK_ERROR_Y, NETWORK_ERROR_COLOR)
@@ -288,17 +302,13 @@ OpenApp() ; 启动A9
 
 Restart() ; 重置，不会影响票数计时器
 {
-	global BACK_X, BACK_Y, BACK_COLOR, GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_CROSS_1, GAME_RUNNING_CHECK_COLOR_CROSS_2, GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2, lastRestartTime, enableDebug
+	global lastRestartTime, enableDebug
 	CheckTime()
 	forceRestart := lastRestartTime != "" && lastRestartTime + 60000 > A_TickCount
-	hasBack := CheckPixel(BACK_X, BACK_Y, BACK_COLOR)
-	mainCross := CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_1) || CheckPixelWithDeviation(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_CROSS_2)
-	mainNormal := CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL)
-	secondNormal := CheckPixel(GAME_RUNNING_CHECK_X_2, GAME_RUNNING_CHECK_Y_2, GAME_RUNNING_CHECK_COLOR_2)
-	if (forceRestart || !(hasBack && mainCross || mainNormal && secondNormal)) ; 60秒内重置过，或者检测不到菜单页特征值
+	notInMenu := !isInMenu()
+	if (forceRestart || notInMenu) ; 60秒内重置过，或者检测不到菜单页特征值
 	{
-		if (enableDebug)
-			Debug("Restarting.", "forceRestart: " . forceRestart, "hasBack: " . hasBack, "mainCross: " . mainCross, "mainNormal: " . mainNormal, "secondNormal: " . secondNormal)
+		Debug("Restarting.", "forceRestart: " . forceRestart, "notInMenu: " . notInMenu)
 		if (!enableDebug)
 			CloseApp()
 		OpenApp()
@@ -410,8 +420,9 @@ CheckFullTicket(type:="daily") ; 满票识别，使用"10"的十位"1"作为特�
 
 ; 检查是否有需要结算的奖励可以领取
 CheckReward() {
-	global GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_LIGHT_GRAY, DAILY_REWORD_READY_X, DAILY_REWORD_READY_X_2, DAILY_REWORD_READY_Y, DAILY_REWORD_READY_COLOR, DELAY_LONG
-	if CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_LIGHT_GRAY) 
+	global
+	Sleep DELAY_LONG
+	if isInMenu() 
 		&& CheckPixel(DAILY_REWORD_READY_X, DAILY_REWORD_READY_Y, DAILY_REWORD_READY_COLOR) 
 		&& CheckPixel(DAILY_REWORD_READY_X_2, DAILY_REWORD_READY_Y, DAILY_REWORD_READY_COLOR)
 		RandomClick(DAILY_REWORD_READY_X_2, DAILY_REWORD_READY_Y, , DELAY_LONG)
@@ -421,7 +432,6 @@ CheckReward() {
 RunCustomRace() {
 	global
 	GoHome()
-	flag := false
 	CheckTime()
 	UpdateTicket()
 	local customRaceX, customRaceY, customRaceColor
@@ -482,7 +492,7 @@ RunCustomRace() {
 			RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
 			local startIndex
 			Random startIndex, 0, carArraySize
-			while (A_Index < startIndex || !StartRace(CUSTOM_CARS[A_Index], 50, 90)) {
+			while (A_Index < startIndex || !StartRace(CUSTOM_CARS[A_Index], 50, 90, false)) {
 				if (A_Index >= startIndex + carArraySize) {
 					ShowTrayTip("无可用车辆")
 					tickets += CUSTOM_TICKET
@@ -497,7 +507,6 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 {
 	global
 	GoHome()
-	flag := false
 	CheckTime()
 	UpdateTicket()
 	if !CheckPixel(DAILY_RACE_X, DAILY_RACE_Y, DAILY_RACE_COLOR)
@@ -548,7 +557,7 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 				RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
 				local startIndex
 				Random startIndex, 0, carArraySize
-				while (A_Index < startIndex || !StartRace(DAILY_CARS[A_Index], 30, 50))
+				while (A_Index < startIndex || !StartRace(DAILY_CARS[A_Index], 30, 50, false))
 				{
 					if (A_Index >= startIndex + carArraySize)
 					{
@@ -565,11 +574,11 @@ RunDailyRace() ; 每日车辆战利品赛事。只要票>=9，就开始比赛
 RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 {
 	global
-	flag := true
 	GoHome()
 	CheckTime()
 	if !CheckPixel(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, MULTI_PLAYER_RACE_COLOR)
 		RandomClick(MULTI_PLAYER_RACE_X, MULTI_PLAYER_RACE_Y, , DELAY_MIDDLE)
+	Sleep DELAY_LONG
 	if CheckPixel(MP_PACK_X, MP_PACK_Y, MP_PACK_COLOR) ; 检测多人包
 	{
 		RandomClick(MP_PACK_X, MP_PACK_Y, , DELAY_MIDDLE)
@@ -615,19 +624,19 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 			maxLevel := 4
 		Loop %maxLevel%
 		{
-			local special := maxLevel = 4 && A_Index = 1
 			local levelX := MP_LEVEL_X + MP_LEVEL_GAP * (maxLevel - A_Index)
+			RandomClick(levelX, MP_LEVEL_Y, , DELAY_SHORT)
 			RandomClick(levelX, MP_LEVEL_Y, , DELAY_LONG)
-			while (!special && A_Index < 3 && !(CheckPixel(MP_CAR_HEAD_1_X, MP_CAR_HEAD_1_Y, MP_CAR_HEAD_1_COLOR) && CheckPixel(MP_CAR_HEAD_2_X, MP_CAR_HEAD_2_Y, MP_CAR_HEAD_2_COLOR)))
-				Sleep DELAY_SHORT
-			;Swipe(1837, 520, 320, 520)
+			while (A_Index < 3 && !(CheckPixel(MP_CAR_HEAD_1_X, MP_CAR_HEAD_1_Y, MP_CAR_HEAD_1_COLOR) && CheckPixel(MP_CAR_HEAD_2_X, MP_CAR_HEAD_2_Y, MP_CAR_HEAD_2_COLOR)))
+				Sleep DELAY_MIDDLE
+			;取消下面两行注释以无视前6辆车
+			;if (A_Index < 5)
+				;Swipe(1837, 520, 320, 520)
 			Loop %MP_MAX_CARS_PER_LEVEL%
 			{
 				local relativePos := A_Index
 				ToolTip 正在检查第%relativePos%辆车
 				local carX := (relativePos - 1) // 2 * (MP_CAR_GAP_W) + MP_CAR_FIRST_OIL_X
-				if (special)
-					carX += 513
 				local carY := relativePos & 1 = 0 ? MP_CAR_LOWER_OIL_Y : MP_CAR_UPPER_OIL_Y
 				local oilColor := GetPixel(carX, carY)
 				local oilR := oilColor & 0xFF
@@ -647,9 +656,8 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 				{
 					if (A_Index > 10)
 						Break
-					RandomClick(levelX, MP_LEVEL_Y, , DELAY_MIDDLE)
 					RandomClick(carX - 220, carY - 150, , DELAY_LONG)
-					finish := StartRace(0, 300, 300)
+					finish := StartRace(0, 300, 300, true)
 				}
 				if (finish)
 					Break
@@ -681,7 +689,7 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 		WaitPopUp()
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED) ; 等待进入
 		Loop 6
-			Swipe(1424, 200, 1424, 950)
+			Swipe(1424, 200, 1424, 950, 5)
 		Sleep DELAY_VERY_SHORT
 		Loop 4 ; 解决滑动误差，当前屏幕找不到EURO 12，就继续滑动，重复4次找不到就放弃
 		{
@@ -704,13 +712,13 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 			}
 			if (foundEuroRace)
 				Break
-			Swipe(1424, 200, 1424, 950)
+			Swipe(1424, 200, 1424, 950, 5)
 		}
 		if (!foundEuroRace)
 			return
 		WaitColor(NEXT_X, NEXT_Y, NEXT_COLOR_GREEN, NEXT_COLOR_RED, NEXT_COLOR_BLACK)
 		RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_LONG)
-		while (!StartRace(CAREER_CARS[A_Index], 30, 90))
+		while (!StartRace(CAREER_CARS[A_Index], 30, 90, false))
 		{
 			if (A_Index >= carArraySize)
 			{
@@ -723,7 +731,7 @@ RunCareerRace() ; 从A9首页打开并开始生涯EURO赛季的第12个赛事
 	Sleep DELAY_MIDDLE
 }
 
-StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需要指定用第几辆车，不需要选车指定0即可，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
+StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240, checkMp:=false) ; 开始比赛，需要指定用第几辆车，不需要选车指定0即可，waitStartTime：检测赛事开始与否的操作超时时间，maxRaceTime：比赛最大持续时间，超时后将重置脚本
 {
 	global
 	if (indexOfCar > 0)
@@ -733,7 +741,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		{
 			if A_Index > 10
 				Restart()
-			Swipe(274, 511, 1837, 511)
+			Swipe(274, 511, 1837, 511, 5)
 		}
 		ShowToolTip("正在检查第" . indexOfCar . "辆车")
 		Sleep DELAY_SHORT
@@ -770,7 +778,7 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 	Sleep DELAY_SUPER_LONG
 	while (!CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR)) ; 检测比赛是否已开始，或者超过设定值强制视为已开始
 	{
-		if CheckPixel(MP_ERROR_X, MP_ERROR_Y, MP_ERROR_COLOR) && flag
+		if checkMp && CheckPixel(MP_ERROR_X, MP_ERROR_Y, MP_ERROR_COLOR)
 		{
 			RandomClick(MP_ERROR_X, MP_ERROR_Y, , DELAY_LONG)
 			return false
@@ -795,9 +803,9 @@ StartRace(indexOfCar, waitStartTime:=30, maxRaceTime:=240) ; 开始比赛，需�
 		else if dt < 450
 			RandomClick(BRAKE_X, BRAKE_Y, dt, DELAY_LONG)
 		if (dt > 0 && dt < 100) ; 1/7 选右边
-			Swipe(1825, 530, 1884, 532)
+			Swipe(1825, 530, 1884, 532, 5)
 		else if (dt > 0 && dt < 200) ; 1/7 选左边
-			Swipe(1884, 530, 1825, 532)
+			Swipe(1884, 530, 1825, 532, 5)
 		if CheckPixel(RACE_FINISH_X, RACE_FINISH_Y, RACE_FINISH_COLOR) ; 这里增强了检测条件，直接特征点匹配 或者 未在跑赛事且间接特征点匹配
 			|| !CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) && CheckPixel(RACE_FINISH_X_2, RACE_FINISH_Y_2, RACE_FINISH_COLOR_2)
 			Break
@@ -844,6 +852,7 @@ CheckOperateMode() ; 检查操作模式是否是自动挡
 
 RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目前在赛事开始前读取时和赛事结束后下一步时不可用
 {
+	global
 	if (OPERATE_MODE)
 	{
 		if CheckPixel(RACING_CHECK_X, RACING_CHECK_Y, RACING_CHECK_COLOR) ; 比赛中则先退出比赛，如果比赛中检测失效，那这里不会正确改回操作模式
@@ -851,7 +860,7 @@ RevertControlSetting() ; 如果是手动挡，恢复操作模式为手动，目�
 			RandomClick(RACING_CHECK_X, RACING_CHECK_Y, , DELAY_MIDDLE, 3)
 			RandomClick(NEXT_X, NEXT_Y, DELAY_SHORT, DELAY_VERY_LONG, 3)
 		}
-		else if !CheckPixel(GAME_RUNNING_CHECK_X, GAME_RUNNING_CHECK_Y, GAME_RUNNING_CHECK_COLOR_NORMAL, GAME_RUNNING_CHECK_COLOR_DARK, GAME_RUNNING_CHECK_COLOR_GRAY)
+		else if !isInMenu()
 			return
 		GoHome()
 		if !CheckPixel(CAREER_RACE_X, CAREER_RACE_Y, CAREER_RACE_COLOR)

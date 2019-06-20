@@ -14,22 +14,22 @@ RUN_TIME_SCOPE = 00:00-23:59
 ; true/false，默认开启/关闭每日赛事
 ENABLE_DAILY_RACE := false
 ; true/false，默认开启/关闭多人赛事
-ENABLE_MULTI_PLAYER_RACE := true
+ENABLE_MULTI_PLAYER_RACE := false
 ; true/false，默认开启/关闭生涯赛事
-ENABLE_CAREER_RACE := false
+ENABLE_CAREER_RACE := true
 
 ; true/false，默认开启/关闭自定义赛事
-ENABLE_CUSTOM_RACE := true
+ENABLE_CUSTOM_RACE := false
 ; special/daily，自定义赛事类型，特殊赛事/每日赛事
 CUSTOM_TYPE = daily
-; 自定义赛事次序，该字段暂不生效
-CUSTOM_INDEX = 9
+; 自定义赛事次序
+CUSTOM_INDEX = 3
 ; 自定义赛事票数消耗
 CUSTOM_TICKET = 2
 ; 自定义赛事用车顺序
-CUSTOM_CARS := [11, 14]
+CUSTOM_CARS := [12, 14, 16, 18, 24, 21]
 
 ; 脚本跑第几个多人赛事
-MP_RACE_INDEX = 2
+MP_RACE_INDEX = 1
 ; 允许脚本使用每个段位的前几辆车来跑多人
-MP_MAX_CARS_PER_LEVEL = 2
+MP_MAX_CARS_PER_LEVEL = 6
