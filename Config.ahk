@@ -16,18 +16,18 @@ ENABLE_DAILY_RACE := false
 ; true/false，默认开启/关闭多人赛事
 ENABLE_MULTI_PLAYER_RACE := false
 ; true/false，默认开启/关闭生涯赛事
-ENABLE_CAREER_RACE := true
+ENABLE_CAREER_RACE := false
 
 ; true/false，默认开启/关闭自定义赛事
-ENABLE_CUSTOM_RACE := false
+ENABLE_CUSTOM_RACE := true
 ; special/daily，自定义赛事类型，特殊赛事/每日赛事
-CUSTOM_TYPE = daily
+CUSTOM_TYPE = special
 ; 自定义赛事次序
-CUSTOM_INDEX = 3
+CUSTOM_INDEX = 6
 ; 自定义赛事票数消耗
 CUSTOM_TICKET = 2
 ; 自定义赛事用车顺序
-CUSTOM_CARS := [12, 14, 16, 18, 24, 21]
+CUSTOM_CARS := [1, 21, 25, 26, 28, 33, 36, 40]
 
 ; 脚本跑第几个多人赛事
 MP_RACE_INDEX = 1

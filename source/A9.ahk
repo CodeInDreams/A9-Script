@@ -167,9 +167,9 @@ CAR_FEATURE_COLOR_LOCKED = 0x7F7F7F
 TICKET_FROM_X = 1888
 TICKET_TO_X = 1913
 TICKET_Y = 192
-TICKET_FROM_X_SPECIAL = 1830
-TICKET_TO_X_SPECIAL = 1855
-TICKET_Y_SPECIAL = 200
+TICKET_FROM_X_SPECIAL = 1869
+TICKET_TO_X_SPECIAL = 1890
+TICKET_Y_SPECIAL = 230
 TICKET_COLOR_BG = 0x000000
 TICKET_COLOR = 0x0DB090
 TICKET_LIMIT = 9
@@ -455,9 +455,9 @@ RunCustomRace() {
 			local found := false
 			while (!found) {
 				if (A_Index < 6)
-					Swipe(559, 672, 1959, 672)
+					Swipe(559, 672, 1959, 672, 5)
 				else if (A_Index < 15)
-					Swipe(1959, 672, 559, 672)
+					Swipe(1959, 672, 559, 672, 5)
 				else
 					return
 				local dx := 481
@@ -630,8 +630,8 @@ RunMultiPlayerRace() ; 从A9首页打开并开始多人赛事
 			while (A_Index < 3 && !(CheckPixel(MP_CAR_HEAD_1_X, MP_CAR_HEAD_1_Y, MP_CAR_HEAD_1_COLOR) && CheckPixel(MP_CAR_HEAD_2_X, MP_CAR_HEAD_2_Y, MP_CAR_HEAD_2_COLOR)))
 				Sleep DELAY_MIDDLE
 			;取消下面两行注释以无视前6辆车
-			;if (A_Index < 5)
-				;Swipe(1837, 520, 320, 520)
+			if (A_Index < 5)
+				Swipe(1837, 520, 320, 520)
 			Loop %MP_MAX_CARS_PER_LEVEL%
 			{
 				local relativePos := A_Index

@@ -4,7 +4,7 @@
 
 名称：A9 Script  
 作者：CodeInDreams  
-适用于：MuMu模拟器、BlueStacks 4模拟器  
+适用于：MuMu模拟器、BlueStacks 4（注意是：国际版）模拟器  
 分辨率：2160×1080（任意2:1分辨率的设备）  
   
 本项目遵守GPL开源协议，协议内容请见LICENSE.TXT。  
