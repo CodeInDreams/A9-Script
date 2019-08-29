@@ -13,8 +13,7 @@ APP_CLOSE_X := 257 + APP_INDEX * 142 ; 应用关闭按钮X坐标
 APP_CLOSE_Y = 16 ; 应用关闭按钮Y坐标
 EMU_HOME_X = 205 ; 首页X坐标
 EMU_HOME_Y = 16 ; 首页X坐标
-APP_OPEN_X = 340 ; A9图标X坐标
-APP_OPEN_Y = 217 ; A9图标Y坐标
+RUN_COMMAND = %programfiles(x86)%\MuMu\emulator\nemu\EmulatorShell\NemuLauncher.exe -p com.gameloft.android.ANMP.GloftA9HM
 
 CloseApp() ; 关闭A9
 {
@@ -28,11 +27,7 @@ CloseApp() ; 关闭A9
 
 RunApp() ; 启动A9
 {
-	global EMU_AHK_CLASS, APP_INDEX, EMU_HOME_X, EMU_HOME_Y, APP_OPEN_X, APP_OPEN_Y, DELAY_MIDDLE, DELAY_LONG, DELAY_SUPER_LONG
-	WinActivate ahk_class %EMU_AHK_CLASS%
-	Sleep DELAY_MIDDLE
-	if APP_INDEX > 1
-		Click %EMU_HOME_X%, %EMU_HOME_Y%
-	RandomClick(APP_OPEN_X, APP_OPEN_Y, DELAY_LONG, DELAY_MIDDLE)
-	RandomClick(APP_OPEN_X, APP_OPEN_Y, , DELAY_SUPER_LONG)
+	global RUN_COMMAND, DELAY_SUPER_LONG
+	Run %RUN_COMMAND%
+	Sleep DELAY_SUPER_LONG
 }
